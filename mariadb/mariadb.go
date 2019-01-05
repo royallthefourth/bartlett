@@ -118,7 +118,7 @@ func mysqlTypeToGo(t string) reflect.Type {
 	default:
 		return nil
 	}
-}// TODO establish list of mysql driver types
+}
 
 // Adapted from https://stackoverflow.com/questions/42774467/how-to-convert-sql-rows-to-typed-json-in-golang
 func sqlToJSON(rows *sql.Rows, w http.ResponseWriter) error {
