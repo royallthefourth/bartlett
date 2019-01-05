@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/royallthefourth/bartlett"
+	"github.com/royallthefourth/bartlett/common"
 	"log"
 	"net/http"
 	"reflect"
@@ -12,15 +13,22 @@ import (
 	"time"
 )
 
-func Routes(db *sql.DB, p bartlett.UserIDProvider, tables []bartlett.Table) (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
-	paths = make([]string, len(tables))
-	handlers = make([]func(http.ResponseWriter, *http.Request), len(tables))
-	for i, t := range tables {
-		paths[i] = fmt.Sprintf("/%s", t.Name)
-		handlers[i] = handleRoute(t, db)
-	}
+type SQLite3 struct {
+	db     *sql.DB
+	tables []bartlett.Table
+	users  bartlett.UserIDProvider
+}
 
-	return paths, handlers
+func New(db *sql.DB, tables []bartlett.Table, users bartlett.UserIDProvider) SQLite3 {
+	return SQLite3{
+		db:     db,
+		tables: tables,
+		users:  users,
+	}
+}
+
+func (b SQLite3) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
+	return common.Routes(b.db, b.users, handleRoute, b.tables)
 }
 
 func handleRoute(table bartlett.Table, db *sql.DB) func(http.ResponseWriter, *http.Request) {

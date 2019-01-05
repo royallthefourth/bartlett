@@ -1,7 +1,5 @@
 package sqlite3
 
-// TODO ql is actually a bit unwieldy and will only get worse as the feature set expands. Rework this to MariaDB.
-
 import (
 	"database/sql"
 	"encoding/json"
@@ -29,8 +27,14 @@ func TestSQLite3(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testSimpleGetAll(t, db)
-	testInvalidRequestMethod(t, db)
+	students := bartlett.Table{
+		Name: `students`,
+	}
+
+	b := New(db, []bartlett.Table{students}, dummyUserProvider)
+
+	testSimpleGetAll(t, b)
+	testInvalidRequestMethod(t, b)
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
@@ -38,16 +42,13 @@ func dummyUserProvider(_ *http.Request) (interface{}, error) {
 }
 
 type student struct {
-	Age   int `json:"age"`
-	Grade int `json:"grade"`
+	Age       int `json:"age"`
+	Grade     int `json:"grade"`
 	StudentID int `json:"student_id"`
 }
 
-func testSimpleGetAll(t *testing.T, db *sql.DB) {
-	students := bartlett.Table{
-		Name: `students`,
-	}
-	paths, handlers := Routes(db, dummyUserProvider, []bartlett.Table{students})
+func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
+	paths, handlers := b.Routes()
 	req, err := http.NewRequest(`GET`, `https://example.com/students`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
@@ -79,12 +80,8 @@ func testSimpleGetAll(t *testing.T, db *sql.DB) {
 	}
 }
 
-func testInvalidRequestMethod(t *testing.T, db *sql.DB) {
-	students := bartlett.Table{
-		Name: `students`,
-		ReadOnly: true,
-	}
-	_, handlers := Routes(db, dummyUserProvider, []bartlett.Table{students})
+func testInvalidRequestMethod(t *testing.T, b bartlett.Bartlett) {
+	_, handlers := b.Routes()
 	req, err := http.NewRequest(`POST`, `https://example.com/students`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)

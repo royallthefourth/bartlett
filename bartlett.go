@@ -1,7 +1,6 @@
 package bartlett
 
 import (
-	"database/sql"
 	"net/http"
 )
 
@@ -17,5 +16,5 @@ type Table struct {
 type UserIDProvider func(r *http.Request) (interface{}, error)
 
 type Bartlett interface {
-	Routes(db *sql.DB, p UserIDProvider, tables []Table) (paths []string, handlers []func(http.ResponseWriter, *http.Request))
+	Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request))
 }
