@@ -10,13 +10,13 @@ Invoke it by providing a function that returns a userID, a slice of tables, and 
 package main
 
 import (
-	"database/sql"
+    "database/sql"
     "fmt"
     "log"
     "net/http"
     _ "github.com/go-sql-driver/mysql"
-	"github.com/royallthefourth/bartlett"
-	"github.com/royallthefourth/bartlett/mariadb"
+    "github.com/royallthefourth/bartlett"
+    "github.com/royallthefourth/bartlett/mariadb"
 )
 
 func indexPage(w http.ResponseWriter, r *http.Request) {
@@ -24,13 +24,13 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
-	return 0, nil
+    return 0, nil
 }
 
 func main() {
-	http.HandleFunc(`/`, indexPage)
-	
-	// The students table will be available from the API, but the rest of the database will not.
+    http.HandleFunc(`/`, indexPage)
+    
+    // The students table will be available from the API, but the rest of the database will not.
     tables := []bartlett.Table{
     	{
             Name: `students`,
