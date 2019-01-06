@@ -30,6 +30,7 @@ func dummyUserProvider(_ *http.Request) (interface{}, error) {
 func main() {
 	http.HandleFunc(`/`, indexPage)
 	
+	// The students table will be available from the API, but the rest of the database will not.
     tables := []bartlett.Table{
     	{
             Name: `students`,
@@ -44,7 +45,7 @@ func main() {
     // Instead, it is a tool that allows you to quickly add an API to your existing application.
     routes, handlers := mariadb.New(db, tables, dummyUserProvider).Routes()
     for i, route := range routes {
-    	http.HandleFunc(`/api` + route, handlers[i])
+    	http.HandleFunc(`/api` + route, handlers[i]) // Adds /api/students to the server.
     }
     
     log.Fatal(http.ListenAndServe(`:8080`, nil))
