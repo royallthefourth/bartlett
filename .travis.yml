@@ -11,11 +11,11 @@ sudo: false
 
 install:
   - go get -t -v ./...
-  - go install github.com/mattn/go-sqlite3
+  - go install -v github.com/mattn/go-sqlite3
 
 before_script:
   - mysql -e 'CREATE DATABASE bartlett;'
 
 script:
-  - go test -tags sqlite3
-  - go test -tags mariadb -args -dsn travis@/bartlett
+  - go test -v -tags sqlite3
+  - go test -v -tags mariadb -args -dsn travis@/bartlett
