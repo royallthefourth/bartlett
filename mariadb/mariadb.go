@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/elgris/sqrl"
 	"github.com/royallthefourth/bartlett"
 	"github.com/royallthefourth/bartlett/common"
 	"log"
@@ -31,14 +30,21 @@ func (b MariaDB) Routes() (paths []string, handlers []func(http.ResponseWriter, 
 	return common.Routes(b.db, b.users, handleRoute, b.tables)
 }
 
-func handleRoute(table bartlett.Table, db *sql.DB) func(http.ResponseWriter, *http.Request) {
+func handleRoute(table bartlett.Table, db *sql.DB, users bartlett.UserIDProvider) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != `GET` {
 			w.WriteHeader(http.StatusNotImplemented)
 			return
 		}
 
-		rows, err := sqrl.Select(`*`).From(table.Name).RunWith(db).Query()
+		query, err := common.Select(table, users, r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(r.RequestURI + err.Error())
+			return
+		}
+
+		rows, err := query.RunWith(db).Query()
 		defer rows.Close()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

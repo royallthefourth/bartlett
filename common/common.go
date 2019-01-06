@@ -7,12 +7,12 @@ import (
 	"net/http"
 )
 
-func Routes(db *sql.DB, p bartlett.UserIDProvider, makeRoute func(table bartlett.Table, db *sql.DB) func(http.ResponseWriter, *http.Request), tables []bartlett.Table) (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
+func Routes(db *sql.DB, users bartlett.UserIDProvider, makeRoute func(table bartlett.Table, db *sql.DB, provider bartlett.UserIDProvider) func(http.ResponseWriter, *http.Request), tables []bartlett.Table) (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
 	paths = make([]string, len(tables))
 	handlers = make([]func(http.ResponseWriter, *http.Request), len(tables))
 	for i, t := range tables {
 		paths[i] = fmt.Sprintf("/%s", t.Name)
-		handlers[i] = makeRoute(t, db)
+		handlers[i] = makeRoute(t, db, users)
 	}
 
 	return paths, handlers

@@ -8,7 +8,7 @@ import (
 // Name is required.
 type Table struct {
 	Name     string
-	ReadOnly bool
+	Writable bool
 	UserID   string
 }
 
