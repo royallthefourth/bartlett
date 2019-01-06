@@ -1,29 +1,22 @@
+// +build mariadb
+
 package mariadb
 
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/royallthefourth/bartlett"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
 
 func TestMariaDB(t *testing.T) {
-	username := os.Getenv(`MARIADB_USERNAME`)
-	password := os.Getenv(`MARIADB_PASSWORD`)
-	host := os.Getenv(`MARIADB_HOST`)
-	dbname := os.Getenv(`MARIADB_DB`)
-
-	if dbname == `` {
-		t.Fatal(`Env var MARIADB_USERNAME must be set to run the MariaDB tests.`)
-	}
-
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", username, password, host, dbname))
+	var dsn string
+	flag.StringVar(&dsn, `dsn`, ``, `MariaDB connection string`)
+	db, err := sql.Open(`mysql`, dsn)
 	if err != nil {
 		t.Fatal(err)
 	}
