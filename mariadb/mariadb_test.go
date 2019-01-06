@@ -1,10 +1,9 @@
-// +build mariadb
-
 package mariadb
 
 import (
 	"database/sql"
 	"encoding/json"
+	"flag"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/royallthefourth/bartlett"
 	"net/http"

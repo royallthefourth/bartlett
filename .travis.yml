@@ -20,5 +20,6 @@ before_script:
   - mysql -e 'CREATE DATABASE bartlett;'
 
 script:
-  - go test -v -tags sqlite3
-  - go test -v -tags mariadb -args -dsn travis@/bartlett
+  - go test -v ./sqlite3
+  - go test -v ./mariadb -args -dsn travis@/bartlett
+  - go test -v $(go list ./... | grep -v mariadb | grep -v sqlite3)
