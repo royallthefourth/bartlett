@@ -8,7 +8,9 @@
 
 ## Usage
 
-Invoke it by providing a function that returns a userID, a slice of tables, and a database connection.
+Invoke Bartlett by providing a function that returns a userID, a slice of tables, and a database connection.
+Bartlett will return a slice of routes corresponding to your table names and a slice of HTTP request handlers.
+
 
 ```go
 package main
