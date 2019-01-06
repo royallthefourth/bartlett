@@ -23,7 +23,7 @@ script:
   - go test -coverprofile=coverage-unit.txt -v $(go list ./... | grep -v mariadb | grep -v sqlite3)
   - go test -coverprofile=coverage-sqlite3.txt -v ./sqlite3
   - go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn travis@/bartlett
-  - cat coverage-mariadb.txt coverage-sqlite3.txt | grep -v "mode:" | cat coverage.txt -
+  - cat coverage-mariadb.txt coverage-sqlite3.txt | grep -v "mode:" | cat coverage-unit.txt - > coverage.txt
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
