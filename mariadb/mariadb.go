@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/elgris/sqrl"
 	"github.com/royallthefourth/bartlett"
 	"github.com/royallthefourth/bartlett/common"
 	"log"
@@ -36,9 +37,8 @@ func handleRoute(table bartlett.Table, db *sql.DB) func(http.ResponseWriter, *ht
 			w.WriteHeader(http.StatusNotImplemented)
 			return
 		}
-		query := fmt.Sprintf(`SELECT * FROM %s`, table.Name)
 
-		rows, err := db.Query(query)
+		rows, err := sqrl.Select(`*`).From(table.Name).RunWith(db).Query()
 		defer rows.Close()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
