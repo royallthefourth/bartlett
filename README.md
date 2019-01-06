@@ -30,7 +30,7 @@ func indexPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
-    return 0, nil
+    return 0, nil // In a real application, use a closure that includes your session handler to generate a user ID. 
 }
 
 func main() {
@@ -40,6 +40,7 @@ func main() {
     tables := []bartlett.Table{
     	{
             Name: `students`,
+            UserID: `student_id`, // Requests will only return rows corresponding to their ID for this table.
     	},
     }
     db, err := sql.Open("mysql", ":@/school")
@@ -64,13 +65,15 @@ Bartlett currently supports SQLite3 and MariaDB.
 Most data types are not yet under test and may not produce good results.
 Some MariaDB types do not have a clear JSON representation. These types are marshaled as `[]byte`.
 The current behavior consists of returning a JSON body corresponding to the query `SELECT * FROM $TABLE;`.
-`WHERE` clauses, column selection, authentication, and joins are all planned for future development.
+`WHERE` clauses, column selection, and joins are all planned for future development.
 
 ## Security
 
 Taking user input from the web to paste into a SQL query does prevent some hazards.
 I mitigate the risk of this by using a whitelist for each type of input and parameter queries for everything else.
 The only tables that can be queried with Bartlett are the ones you specify.
+
+To restrict access per-row, specify a `UserID` column name in your `Table`.
 
 ## Prior Art
 
