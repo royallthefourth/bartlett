@@ -13,13 +13,13 @@ env:
   - GO111MODULE=on
 
 install:
-  - go get -t -v ./...
-  - go install -v github.com/mattn/go-sqlite3
+  - go get ./...
+  - go install github.com/mattn/go-sqlite3
 
 before_script:
   - mysql -e 'CREATE DATABASE bartlett;'
 
 script:
   - go test -v ./sqlite3
-  - go test -v ./mariadb -args -dsn travis@/bartlett
+  - go test -v ./mariadb -dsn travis@/bartlett
   - go test -v $(go list ./... | grep -v mariadb | grep -v sqlite3)

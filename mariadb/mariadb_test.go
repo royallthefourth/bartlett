@@ -12,9 +12,14 @@ import (
 	"testing"
 )
 
-func TestMariaDB(t *testing.T) {
-	var dsn string
+var dsn string
+
+func init() {
 	flag.StringVar(&dsn, `dsn`, ``, `MariaDB connection string`)
+	flag.Parse()
+}
+
+func TestMariaDB(t *testing.T) {
 	db, err := sql.Open(`mysql`, dsn)
 	if err != nil {
 		t.Fatal(err)
