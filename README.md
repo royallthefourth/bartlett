@@ -1,5 +1,8 @@
 # Bartlett
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/royallthefourth/bartlett)](https://goreportcard.com/report/github.com/royallthefourth/bartlett)
+[![Build Status](https://travis-ci.org/royallthefourth/bartlett.svg?branch=master)](https://travis-ci.org/royallthefourth/bartlett)
+
 *Bartlett* is a library that automatically adds API routes corresponding to your database tables to your Go web application.
 
 ## Usage
