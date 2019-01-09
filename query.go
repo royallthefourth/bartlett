@@ -1,16 +1,15 @@
-package common
+package bartlett
 
 import (
 	"github.com/elgris/sqrl"
-	"github.com/royallthefourth/bartlett"
 	"net/http"
 )
 
-func Select(table bartlett.Table, users bartlett.UserIDProvider, r *http.Request) (*sqrl.SelectBuilder, error) {
+func (b Bartlett) select_(table Table, r *http.Request) (*sqrl.SelectBuilder, error) {
 	query := sqrl.Select(`*`).From(table.Name)
 
 	if table.UserID != `` {
-		userID, err := users(r)
+		userID, err := b.Users(r)
 		if err != nil {
 			return query, err
 		}

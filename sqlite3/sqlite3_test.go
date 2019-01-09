@@ -47,7 +47,7 @@ func TestSQLite3(t *testing.T) {
 		},
 	}
 
-	b := New(db, tables, dummyUserProvider)
+	b := bartlett.Bartlett{db, MarshalResults, tables, dummyUserProvider}
 
 	testSimpleGetAll(t, b)
 	testUserGetAll(t, b)

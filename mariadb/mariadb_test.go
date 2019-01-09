@@ -41,7 +41,7 @@ func TestMariaDB(t *testing.T) {
 		Name: `students`,
 	}
 
-	b := New(db, []bartlett.Table{students}, dummyUserProvider)
+	b := bartlett.Bartlett{db, MarshalResults, []bartlett.Table{students}, dummyUserProvider}
 
 	testSimpleGetAll(t, b)
 	testInvalidRequestMethod(t, b)

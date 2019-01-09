@@ -4,67 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/royallthefourth/bartlett"
-	"github.com/royallthefourth/bartlett/common"
-	"log"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
 )
 
-type SQLite3 struct {
-	db     *sql.DB
-	tables []bartlett.Table
-	users  bartlett.UserIDProvider
-}
-
-func New(db *sql.DB, tables []bartlett.Table, users bartlett.UserIDProvider) SQLite3 {
-	return SQLite3{
-		db:     db,
-		tables: tables,
-		users:  users,
-	}
-}
-
-func (b SQLite3) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
-	return common.Routes(b.db, b.users, handleRoute, b.tables)
-}
-
-func handleRoute(table bartlett.Table, db *sql.DB, users bartlett.UserIDProvider) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != `GET` {
-			w.WriteHeader(http.StatusNotImplemented)
-			return
-		}
-
-		query, err := common.Select(table, users, r)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		rows, err := query.RunWith(db).Query()
-		defer rows.Close()
-
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		err = sqlToJSON(rows, w)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-	}
-}
-
-// Adapted from https://stackoverflow.com/questions/42774467/how-to-convert-sql-rows-to-typed-json-in-golang
-func sqlToJSON(rows *sql.Rows, w http.ResponseWriter) error {
+// Marshal results from SQLite3 types to Go types, then output JSON to the ResponseWriter.
+func MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf(`column error: %v`, err)
