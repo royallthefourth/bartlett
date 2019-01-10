@@ -5,22 +5,14 @@ import (
 	"net/http"
 )
 
-// A Table represents a table in the database.
-// Name is required.
-type Table struct {
-	Name     string
-	Writable bool
-	UserID   string
-}
-
 // A UserIDProvider is a function that is able to use an incoming request to produce a user ID.
 type UserIDProvider func(r *http.Request) (interface{}, error)
 
 type Bartlett struct {
-	DB              *sql.DB
-	ResultMarshaler ResultMarshaler
-	Tables          []Table
-	Users           UserIDProvider
+	DB     *sql.DB
+	Driver Driver
+	Tables []Table
+	Users  UserIDProvider
 }
 
 // A ResultMarshaler interprets a database result set, selects appropriate Go types, and writes JSON to the output stream.

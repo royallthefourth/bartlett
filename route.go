@@ -6,11 +6,17 @@ import (
 	"net/http"
 )
 
-func (b Bartlett) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
+func (b *Bartlett) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
 	paths = make([]string, len(b.Tables))
 	handlers = make([]func(http.ResponseWriter, *http.Request), len(b.Tables))
 	for i, t := range b.Tables {
-		paths[i] = fmt.Sprintf("/%s", t.Name)
+		columns, err := b.Driver.GetColumns(b.DB, t)
+		if err != nil {
+			log.Println(err.Error())
+		} else {
+			t.columns = columns
+		}
+		paths[i] = fmt.Sprintf(`/%s`, t.Name)
 		handlers[i] = b.handleRoute(t)
 	}
 
@@ -40,7 +46,7 @@ func (b Bartlett) handleRoute(table Table) func(http.ResponseWriter, *http.Reque
 			return
 		}
 
-		err = b.ResultMarshaler(rows, w)
+		err = b.Driver.MarshalResults(rows, w)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(r.RequestURI + err.Error())

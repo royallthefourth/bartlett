@@ -11,6 +11,7 @@
 Invoke Bartlett by providing a function that returns a userID, a slice of tables, and a database connection.
 Bartlett will return a slice of routes corresponding to your table names and a slice of HTTP request handlers.
 
+### Server Setup
 
 ```go
 package main
@@ -58,6 +59,13 @@ func main() {
     log.Fatal(http.ListenAndServe(`:8080`, nil))
 }
 ```
+
+### Querying
+
+#### SELECT
+
+TODO: document simple select
+TODO: document column select
 
 ## Status
 

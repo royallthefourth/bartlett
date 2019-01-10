@@ -2,18 +2,23 @@ package bartlett
 
 import (
 	"database/sql"
-	"github.com/elgris/sqrl"
 	"net/http"
 	"strings"
 	"testing"
 )
 
-func dummyResultMarshaler(_ *sql.Rows, _ http.ResponseWriter) error {
+func dummyUserProvider(_ *http.Request) (interface{}, error) {
+	return 1, nil
+}
+
+type dummyDriver struct{}
+
+func (d dummyDriver) MarshalResults(_ *sql.Rows, _ http.ResponseWriter) error {
 	return nil
 }
 
-func dummyUserProvider(_ *http.Request) (interface{}, error) {
-	return 1, nil
+func (d dummyDriver) GetColumns(t Table) ([]string, error) {
+	return []string{}, nil
 }
 
 func TestSelect(t *testing.T) {
@@ -26,7 +31,7 @@ func TestSelect(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b := Bartlett{&sql.DB{}, dummyResultMarshaler, []Table{table}, dummyUserProvider}
+	b := Bartlett{&sql.DB{}, dummyDriver{}, []Table{table}, dummyUserProvider}
 
 	builder, err := b.select_(table, req)
 	if err != nil {
@@ -42,10 +47,10 @@ func TestSelect(t *testing.T) {
 	}
 }
 
-func TestAddColumns(t *testing.T) {
-	query := sqrl.Select(``)
-	query = addColumns(query, `age,score:grade`)
-	query.From(`students`)
-	sql, _, _ := query.ToSql()
-	t.Logf(sql)
-}
+//func TestAddColumns(t *testing.T) {
+//	query := sqrl.Select(``)
+//	query = addColumns(query, `age,score:grade`)
+//	query.From(`students`)
+//	sql, _, _ := query.ToSql()
+//	t.Logf(sql)
+//}

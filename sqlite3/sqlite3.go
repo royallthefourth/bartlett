@@ -4,14 +4,36 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/elgris/sqrl"
+	"github.com/royallthefourth/bartlett"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
 
+type SQLite3 struct{}
+
+// GetColumns queries `sqlite_master` and returns a list of valid column names.
+func (_ SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+	var createQuery string
+	rows, err := sqrl.Select(`sql`).From(`sqlite_master`).Where(`name = ?`, t.Name).RunWith(db).Query()
+	if err != nil {
+		return []string{}, err
+	}
+
+	rows.Next() // We should only expect a single row here.
+	err = rows.Scan(&createQuery)
+	if err != nil {
+		return []string{}, err
+	}
+
+	return parseCreateTable(createQuery), err
+}
+
 // Marshal results from SQLite3 types to Go types, then output JSON to the ResponseWriter.
-func MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
+func (_ SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf(`column error: %v`, err)
@@ -39,12 +61,14 @@ func MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 				types[i] = reflect.TypeOf([]byte{})
 			case `text`:
 				types[i] = reflect.TypeOf(``)
+			case `varchar`:
+				types[i] = reflect.TypeOf(``)
 			case `timestamp`:
 				types[i] = reflect.TypeOf(time.Now())
 			case `datetime`:
 				types[i] = reflect.TypeOf(time.Now())
 			default:
-				return fmt.Errorf(`scantype is nil for column %v`, columnType)
+				return fmt.Errorf(`scantype is nil for column %+v`, columnType)
 			}
 		}
 	}
@@ -94,4 +118,15 @@ func MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	}
 
 	return err
+}
+
+func parseCreateTable(sql string) (columns []string) {
+	colSpec := regexp.MustCompile(`.*CREATE\s+TABLE\s+(\S+)\s*\((.*)\).*`)
+	name := regexp.MustCompile(`\s.*`)
+	specs := strings.Split(colSpec.FindStringSubmatch(sql)[2], `,`)
+	for _, spec := range specs {
+		columns = append(columns, name.ReplaceAllString(strings.TrimSpace(spec), ``))
+	}
+
+	return columns
 }
