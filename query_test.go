@@ -17,7 +17,7 @@ func (d dummyDriver) MarshalResults(_ *sql.Rows, _ http.ResponseWriter) error {
 	return nil
 }
 
-func (d dummyDriver) GetColumns(t Table) ([]string, error) {
+func (d dummyDriver) GetColumns(*sql.DB, Table) ([]string, error) {
 	return []string{}, nil
 }
 
