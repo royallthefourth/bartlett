@@ -8,7 +8,7 @@
 
 ## Usage
 
-Invoke Bartlett by providing a function that returns a userID, a slice of tables, and a database connection.
+Invoke Bartlett by providing a database connection, a Bartlett driver, a slice of tables, and a function that returns a userID.
 Bartlett will return a slice of routes corresponding to your table names and a slice of HTTP request handlers.
 
 ### Server Setup
@@ -51,7 +51,7 @@ func main() {
     
     // Bartlett is not a web application.
     // Instead, it is a tool that allows you to quickly add an API to your existing application.
-    routes, handlers := mariadb.New(db, tables, dummyUserProvider).Routes()
+    routes, handlers := bartlett.Bartlett{db, mariadb.MariaDB{}, tables, dummyUserProvider}.Routes()
     for i, route := range routes {
     	http.HandleFunc(`/api` + route, handlers[i]) // Adds /api/students to the server.
     }

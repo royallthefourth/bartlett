@@ -105,10 +105,6 @@ func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
 		if path == `/teachers` {
 			handlers[i](resp, req) // Fill the response
 
-			if resp.Code != http.StatusOK {
-				t.Fatalf(`Expected "200" but got %d for status code`, resp.Code)
-			}
-
 			if !json.Valid(resp.Body.Bytes()) {
 				t.Fatalf(`Expected valid JSON response but got %s`, resp.Body.String())
 			}

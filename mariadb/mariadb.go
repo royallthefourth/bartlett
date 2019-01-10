@@ -12,10 +12,33 @@ import (
 
 type MariaDB struct{}
 
+type sqlColumn struct {
+	Field string
+	Type string
+	Null string
+	Key string
+	Default interface{}
+	Extra string
+}
+
 func (_ MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
-	// TODO add query that fetches columns from the named table
-	// TODO assign returned list of columns to t.Columns
-	return []string{}, nil
+	rows, err := db.Query(fmt.Sprintf(`SHOW COLUMNS FROM %s`, t.Name))
+	if err != nil {
+		return []string{}, err
+	}
+
+	columns := make([]string, 0)
+
+	for rows.Next() {
+		var c sqlColumn
+		err = rows.Scan(&c.Field, &c.Type, &c.Null, &c.Key, &c.Default, &c.Extra)
+		if err != nil {
+			return columns, err
+		}
+		columns = append(columns, c.Field)
+	}
+
+	return []string{}, err
 }
 
 // Marshal results from MariaDB types to Go types, then output JSON to the ResponseWriter.
