@@ -13,12 +13,12 @@ import (
 type MariaDB struct{}
 
 type sqlColumn struct {
-	Field string
-	Type string
-	Null string
-	Key string
+	Field   string
+	Type    string
+	Null    string
+	Key     string
 	Default interface{}
-	Extra string
+	Extra   string
 }
 
 func (_ MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {

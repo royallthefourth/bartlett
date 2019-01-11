@@ -84,7 +84,15 @@ The result set will be emitted as a JSON array:
 Note that all results are emitted as an array, even if there is only one row.
 
 Requests may filter columns by the `select=` query parameter to cut out irrelevant data.
-Separate column names by `,`: `/students?select=student_id,grade`
+Use `,` to separate column names: `/students?select=student_id,grade`
+
+##### ORDER BY
+
+To order results, add `order` to the query: `/students?order=student_id`
+
+Order by mutliple columns by separating them with `,`: `/students?order=age,grade`
+
+Choose `ASC` or `DESC` by appending `.asc` or `.desc` to the field name: `/students?order=age.asc,grade.desc` 
 
 ## Status
 
