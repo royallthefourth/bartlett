@@ -70,14 +70,14 @@ The result set will be emitted as a JSON array:
 ```json
 [
     {
-    "student_id": 1,
-    "age": 18,
-    "grade": 85
+        "student_id": 1,
+        "age": 18,
+        "grade": 85
     },
     {
-      "student_id": 2,
-      "age": 20,
-      "grade": 91
+        "student_id": 2,
+        "age": 20,
+        "grade": 91
     }
 ]
 ```
