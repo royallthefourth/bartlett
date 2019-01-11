@@ -2,6 +2,7 @@ package bartlett
 
 import (
 	"database/sql"
+	"github.com/elgris/sqrl"
 	"net/http"
 	"strings"
 	"testing"
@@ -58,5 +59,16 @@ func TestParseColumns(t *testing.T) {
 
 	if cols[0] != `students` {
 		t.Errorf(`Expected table name "students" but got "%s"`, cols[0])
+	}
+}
+
+func TestSelectOrder(t *testing.T) {
+	schema := Table{columns: []string{`student_id`, `grade`}}
+	req, _ := http.NewRequest("GET", "http://example.com?order=grade.asc,student_id", nil)
+	query := sqrl.Select(`*`).From(`students`)
+	query = selectOrder(query, schema, req)
+	rawSQL, _, _ := query.ToSql()
+	if !strings.Contains(rawSQL, `ORDER BY grade ASC, student_id DESC`) {
+		t.Fatalf(`Expected "ORDER BY grade ASC, student_id DESC" but got %s`, rawSQL)
 	}
 }
