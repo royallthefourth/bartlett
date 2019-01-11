@@ -25,6 +25,8 @@ func (b *Bartlett) Routes() (paths []string, handlers []func(http.ResponseWriter
 
 func (b Bartlett) handleRoute(table Table) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(`Content-Type`, `application/json`)
+
 		if r.Method != `GET` {
 			w.WriteHeader(http.StatusNotImplemented)
 			return
