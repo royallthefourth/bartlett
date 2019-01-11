@@ -52,7 +52,6 @@ func TestSQLite3(t *testing.T) {
 	testSimpleGetAll(t, b)
 	testUserGetAll(t, b)
 	testGetColumn(t, b)
-	testInvalidRequestMethod(t, b)
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
@@ -162,21 +161,6 @@ func testUserGetAll(t *testing.T, b bartlett.Bartlett) {
 				t.Fatalf(`Expected student to have student_id 1 but got %d instead`, testStudents[0].StudentID)
 			}
 		}
-	}
-}
-
-func testInvalidRequestMethod(t *testing.T, b bartlett.Bartlett) {
-	_, handlers := b.Routes()
-	req, err := http.NewRequest(`POST`, `https://example.com/students`, strings.NewReader(``))
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp := httptest.NewRecorder()
-
-	handlers[0](resp, req) // Fill the response
-
-	if resp.Code != http.StatusNotImplemented {
-		t.Fatalf(`Expected "501" but got %d for status code`, resp.Code)
 	}
 }
 
