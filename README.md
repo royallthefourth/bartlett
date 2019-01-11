@@ -86,7 +86,6 @@ Note that all results are emitted as an array, even if there is only one row.
 Requests may filter columns by the `select=` query parameter to cut out irrelevant data.
 Separate column names by `,`: `/students?select=student_id,grade`
 
-
 ## Status
 
 This project is under heavy development.
