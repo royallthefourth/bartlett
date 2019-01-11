@@ -2,7 +2,6 @@ language: go
 
 go:
   - 1.11.x
-  - tip
 
 addons:
   mariadb: '10.1'
