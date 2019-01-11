@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (b Bartlett) select_(t Table, r *http.Request) (*sqrl.SelectBuilder, error) {
+func (b Bartlett) buildSelect(t Table, r *http.Request) (*sqrl.SelectBuilder, error) {
 	query := selectColumns(t, r).From(t.Name)
 	query = selectOrder(query, t, r)
 

@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/royallthefourth/bartlett.svg?branch=master)](https://travis-ci.org/royallthefourth/bartlett)
 [![codecov](https://codecov.io/gh/royallthefourth/bartlett/branch/master/graph/badge.svg)](https://codecov.io/gh/royallthefourth/bartlett)
 
-*Bartlett* is a library that automatically adds API routes corresponding to your database tables to your Go web application.
+*Bartlett* is a library that automatically generates a CRUD API for your Go web application.
 
 ## Usage
 
@@ -65,7 +65,7 @@ func main() {
 #### SELECT
 
 To `SELECT` from a table, make a `GET` request to its corresponding URL.
-For example, `SELECT * FROM students;` may be achieved by `curl -XGET http://localhost:8080/students`
+For example, `SELECT * FROM students;` agsinst the example above may be achieved by `curl -XGET http://localhost:8080/students`
 The result set will be emitted as a JSON array:
 ```json
 [

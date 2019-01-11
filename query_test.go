@@ -34,17 +34,17 @@ func TestSelect(t *testing.T) {
 
 	b := Bartlett{&sql.DB{}, dummyDriver{}, []Table{table}, dummyUserProvider}
 
-	builder, err := b.select_(table, req)
+	builder, err := b.buildSelect(table, req)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	sql, args, err := builder.ToSql()
+	rawSQL, args, _ := builder.ToSql()
 	if args[0] != 1 {
 		t.Fatalf(`Expected userID arg to be 1 but got %v instead`, args[0])
 	}
-	if !strings.Contains(sql, `student_id =`) {
-		t.Fatalf(`Expected query to require student_id but criterion not found in %s`, sql)
+	if !strings.Contains(rawSQL, `student_id =`) {
+		t.Fatalf(`Expected query to require student_id but criterion not found in %s`, rawSQL)
 	}
 }
 

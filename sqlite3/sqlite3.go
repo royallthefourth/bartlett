@@ -13,10 +13,11 @@ import (
 	"time"
 )
 
+// SQLite3 provides logic specific to SQLite3 databases.
 type SQLite3 struct{}
 
 // GetColumns queries `sqlite_master` and returns a list of valid column names.
-func (_ SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+func (SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
 	var createQuery string
 	rows, err := sqrl.Select(`sql`).From(`sqlite_master`).Where(`name = ?`, t.Name).RunWith(db).Query()
 	if err != nil {
@@ -32,8 +33,8 @@ func (_ SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
 	return parseCreateTable(createQuery), err
 }
 
-// Marshal results from SQLite3 types to Go types, then output JSON to the ResponseWriter.
-func (_ SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
+// MarshalResults converts results from SQLite3 types to Go types, then outputs JSON to the ResponseWriter.
+func (SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf(`column error: %v`, err)
@@ -76,7 +77,7 @@ func (_ SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	values := make([]interface{}, len(columnTypes))
 	data := make(map[string]interface{})
 
-	_, err = w.Write([]byte{'['})
+	_, err = w.Write([]byte{'['}) // Start the
 	if err != nil {
 		return fmt.Errorf(`failed to write opening bracket: %s`, err)
 	}

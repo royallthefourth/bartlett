@@ -6,6 +6,9 @@ import (
 	"net/http"
 )
 
+// Routes generates all of the URLs and handlers for the tables specified in Bartlett.
+// Iterate this output to feed it into your web server, prefix or otherwise alter the route names,
+// and add filtering to the handler functions.
 func (b *Bartlett) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
 	paths = make([]string, len(b.Tables))
 	handlers = make([]func(http.ResponseWriter, *http.Request), len(b.Tables))
@@ -32,7 +35,7 @@ func (b Bartlett) handleRoute(table Table) func(http.ResponseWriter, *http.Reque
 			return
 		}
 
-		query, err := b.select_(table, r)
+		query, err := b.buildSelect(table, r)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(r.RequestURI + err.Error())

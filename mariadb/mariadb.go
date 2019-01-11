@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// MariaDB provides logic specific to MariaDB and probably other MySQL compatibles, but MariaDB is the target.
 type MariaDB struct{}
 
 type sqlColumn struct {
@@ -21,7 +22,8 @@ type sqlColumn struct {
 	Extra   string
 }
 
-func (_ MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+// GetColumns invokes `SHOW COLUMNS` and uses the output to determine valid columns for each table.
+func (MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
 	rows, err := db.Query(fmt.Sprintf(`SHOW COLUMNS FROM %s`, t.Name))
 	if err != nil {
 		return []string{}, err
@@ -41,8 +43,8 @@ func (_ MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
 	return []string{}, err
 }
 
-// Marshal results from MariaDB types to Go types, then output JSON to the ResponseWriter.
-func (_ MariaDB) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
+// MarshalResults converts from MariaDB types to Go types, then outputs JSON to the ResponseWriter.
+func (MariaDB) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf(`column error: %v`, err)
