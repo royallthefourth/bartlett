@@ -25,30 +25,45 @@ func TestMariaDB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = db.Exec(`CREATE TABLE students(student_id INTEGER PRIMARY KEY AUTO_INCREMENT, age INTEGER, grade INTEGER);`)
+	_, err = db.Exec(`CREATE TABLE students(student_id INTEGER PRIMARY KEY AUTO_INCREMENT, age INTEGER NOT NULL, grade INTEGER);`)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	defer db.Exec(`DROP TABLE students;`)
 
 	_, err = db.Exec(`INSERT INTO students(age, grade) VALUES(18, 85),(20,91);`)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	students := bartlett.Table{
-		Name: `students`,
+	_, err = db.Exec(`CREATE TABLE teachers(teacher_id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(25));`)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	b := New(db, []bartlett.Table{students}, dummyUserProvider)
+	_, err = db.Exec(`INSERT INTO teachers(name) VALUES('Mr. Smith'),('Ms. Key');`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tables := []bartlett.Table{
+		{
+			Name:   `students`,
+			UserID: `student_id`,
+		},
+		{
+			Name: `teachers`,
+		},
+	}
+
+	b := bartlett.Bartlett{db, MariaDB{}, tables, dummyUserProvider}
 
 	testSimpleGetAll(t, b)
-	testInvalidRequestMethod(t, b)
+	db.Exec(`DROP TABLE students;`)
+	db.Exec(`DROP TABLE teachers;`)
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
-	return 0, nil
+	return 1, nil
 }
 
 type student struct {
@@ -87,20 +102,5 @@ func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
 
 	if testStudents[0].Age != 18 {
 		t.Fatalf(`Expected first student to have age 18 but got %d instead`, testStudents[0].Age)
-	}
-}
-
-func testInvalidRequestMethod(t *testing.T, b bartlett.Bartlett) {
-	_, handlers := b.Routes()
-	req, err := http.NewRequest(`POST`, `https://example.com/students`, strings.NewReader(``))
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp := httptest.NewRecorder()
-
-	handlers[0](resp, req) // Fill the response
-
-	if resp.Code != http.StatusNotImplemented {
-		t.Fatalf(`Expected "501" but got %d for status code`, resp.Code)
 	}
 }

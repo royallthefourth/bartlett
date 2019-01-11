@@ -4,67 +4,36 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/elgris/sqrl"
 	"github.com/royallthefourth/bartlett"
-	"github.com/royallthefourth/bartlett/common"
-	"log"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
 
-type SQLite3 struct {
-	db     *sql.DB
-	tables []bartlett.Table
-	users  bartlett.UserIDProvider
-}
+type SQLite3 struct{}
 
-func New(db *sql.DB, tables []bartlett.Table, users bartlett.UserIDProvider) SQLite3 {
-	return SQLite3{
-		db:     db,
-		tables: tables,
-		users:  users,
+// GetColumns queries `sqlite_master` and returns a list of valid column names.
+func (_ SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+	var createQuery string
+	rows, err := sqrl.Select(`sql`).From(`sqlite_master`).Where(`name = ?`, t.Name).RunWith(db).Query()
+	if err != nil {
+		return []string{}, err
 	}
-}
 
-func (b SQLite3) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
-	return common.Routes(b.db, b.users, handleRoute, b.tables)
-}
-
-func handleRoute(table bartlett.Table, db *sql.DB, users bartlett.UserIDProvider) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != `GET` {
-			w.WriteHeader(http.StatusNotImplemented)
-			return
-		}
-
-		query, err := common.Select(table, users, r)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		rows, err := query.RunWith(db).Query()
-		defer rows.Close()
-
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		err = sqlToJSON(rows, w)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
+	rows.Next() // We should only expect a single row here.
+	err = rows.Scan(&createQuery)
+	if err != nil {
+		return []string{}, err
 	}
+
+	return parseCreateTable(createQuery), err
 }
 
-// Adapted from https://stackoverflow.com/questions/42774467/how-to-convert-sql-rows-to-typed-json-in-golang
-func sqlToJSON(rows *sql.Rows, w http.ResponseWriter) error {
+// Marshal results from SQLite3 types to Go types, then output JSON to the ResponseWriter.
+func (_ SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf(`column error: %v`, err)
@@ -92,12 +61,14 @@ func sqlToJSON(rows *sql.Rows, w http.ResponseWriter) error {
 				types[i] = reflect.TypeOf([]byte{})
 			case `text`:
 				types[i] = reflect.TypeOf(``)
+			case `varchar`:
+				types[i] = reflect.TypeOf(``)
 			case `timestamp`:
 				types[i] = reflect.TypeOf(time.Now())
 			case `datetime`:
 				types[i] = reflect.TypeOf(time.Now())
 			default:
-				return fmt.Errorf(`scantype is nil for column %v`, columnType)
+				return fmt.Errorf(`scantype is nil for column %+v`, columnType)
 			}
 		}
 	}
@@ -147,4 +118,15 @@ func sqlToJSON(rows *sql.Rows, w http.ResponseWriter) error {
 	}
 
 	return err
+}
+
+func parseCreateTable(sql string) (columns []string) {
+	colSpec := regexp.MustCompile(`.*CREATE\s+TABLE\s+(\S+)\s*\((.*)\).*`)
+	name := regexp.MustCompile(`\s.*`)
+	specs := strings.Split(colSpec.FindStringSubmatch(sql)[2], `,`)
+	for _, spec := range specs {
+		columns = append(columns, name.ReplaceAllString(strings.TrimSpace(spec), ``))
+	}
+
+	return columns
 }

@@ -5,60 +5,106 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/royallthefourth/bartlett"
-	"github.com/royallthefourth/bartlett/common"
-	"log"
 	"net/http"
 	"reflect"
 	"time"
 )
 
-type MariaDB struct {
-	db     *sql.DB
-	tables []bartlett.Table
-	users  bartlett.UserIDProvider
+type MariaDB struct{}
+
+type sqlColumn struct {
+	Field string
+	Type string
+	Null string
+	Key string
+	Default interface{}
+	Extra string
 }
 
-func New(db *sql.DB, tables []bartlett.Table, users bartlett.UserIDProvider) MariaDB {
-	return MariaDB{
-		db:     db,
-		tables: tables,
-		users:  users,
+func (_ MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+	rows, err := db.Query(fmt.Sprintf(`SHOW COLUMNS FROM %s`, t.Name))
+	if err != nil {
+		return []string{}, err
 	}
+
+	columns := make([]string, 0)
+
+	for rows.Next() {
+		var c sqlColumn
+		err = rows.Scan(&c.Field, &c.Type, &c.Null, &c.Key, &c.Default, &c.Extra)
+		if err != nil {
+			return columns, err
+		}
+		columns = append(columns, c.Field)
+	}
+
+	return []string{}, err
 }
 
-func (b MariaDB) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
-	return common.Routes(b.db, b.users, handleRoute, b.tables)
-}
+// Marshal results from MariaDB types to Go types, then output JSON to the ResponseWriter.
+func (_ MariaDB) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
+	columns, err := rows.Columns()
+	if err != nil {
+		return fmt.Errorf(`column error: %v`, err)
+	}
 
-func handleRoute(table bartlett.Table, db *sql.DB, users bartlett.UserIDProvider) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != `GET` {
-			w.WriteHeader(http.StatusNotImplemented)
-			return
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return fmt.Errorf(`column type error: %v`, err)
+	}
+
+	types := make([]reflect.Type, len(columnTypes))
+	for i, columnType := range columnTypes {
+		types[i] = mysqlTypeToGo(columnType.DatabaseTypeName())
+
+	}
+
+	values := make([]interface{}, len(columnTypes))
+	data := make(map[string]interface{})
+
+	_, err = w.Write([]byte{'['})
+	if err != nil {
+		return fmt.Errorf(`failed to write opening bracket: %s`, err)
+	}
+
+	count := 0
+	for rows.Next() {
+		if count > 0 {
+			_, err = w.Write([]byte{','})
+			if err != nil {
+				return fmt.Errorf(`failed to write comma: %s`, err)
+			}
+		}
+		count++
+
+		for i := range values {
+			values[i] = reflect.New(types[i]).Interface()
+		}
+		err = rows.Scan(values...)
+		if err != nil {
+			return fmt.Errorf(`failed to scan values: %v`, err)
+		}
+		for i, v := range values {
+			data[columns[i]] = v
 		}
 
-		query, err := common.Select(table, users, r)
+		jsonRow, err := json.Marshal(data)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
+			return fmt.Errorf(`failed to marshal to json: %s`, err)
 		}
 
-		rows, err := query.RunWith(db).Query()
-		defer rows.Close()
+		_, err = w.Write(jsonRow)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		err = sqlToJSON(rows, w)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
+			return fmt.Errorf(`failed to write closing bracket: %s`, err)
 		}
 	}
+
+	_, err = w.Write([]byte{']'})
+	if err != nil {
+		return fmt.Errorf(`failed to write closing bracket: %s`, err)
+	}
+
+	return err
 }
 
 // Driver gives weird results for column types by default.
@@ -124,70 +170,4 @@ func mysqlTypeToGo(t string) reflect.Type {
 	default:
 		return nil
 	}
-}
-
-// Adapted from https://stackoverflow.com/questions/42774467/how-to-convert-sql-rows-to-typed-json-in-golang
-func sqlToJSON(rows *sql.Rows, w http.ResponseWriter) error {
-	columns, err := rows.Columns()
-	if err != nil {
-		return fmt.Errorf(`column error: %v`, err)
-	}
-
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return fmt.Errorf(`column type error: %v`, err)
-	}
-
-	types := make([]reflect.Type, len(columnTypes))
-	for i, columnType := range columnTypes {
-		types[i] = mysqlTypeToGo(columnType.DatabaseTypeName())
-
-	}
-
-	values := make([]interface{}, len(columnTypes))
-	data := make(map[string]interface{})
-
-	_, err = w.Write([]byte{'['})
-	if err != nil {
-		return fmt.Errorf(`failed to write opening bracket: %s`, err)
-	}
-
-	count := 0
-	for rows.Next() {
-		if count > 0 {
-			_, err = w.Write([]byte{','})
-			if err != nil {
-				return fmt.Errorf(`failed to write comma: %s`, err)
-			}
-		}
-		count++
-
-		for i := range values {
-			values[i] = reflect.New(types[i]).Interface()
-		}
-		err = rows.Scan(values...)
-		if err != nil {
-			return fmt.Errorf(`failed to scan values: %v`, err)
-		}
-		for i, v := range values {
-			data[columns[i]] = v
-		}
-
-		jsonRow, err := json.Marshal(data)
-		if err != nil {
-			return fmt.Errorf(`failed to marshal to json: %s`, err)
-		}
-
-		_, err = w.Write(jsonRow)
-		if err != nil {
-			return fmt.Errorf(`failed to write closing bracket: %s`, err)
-		}
-	}
-
-	_, err = w.Write([]byte{']'})
-	if err != nil {
-		return fmt.Errorf(`failed to write closing bracket: %s`, err)
-	}
-
-	return err
 }
