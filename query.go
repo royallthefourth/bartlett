@@ -38,7 +38,7 @@ func selectOrder(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.Sele
 }
 
 func parseOrder(t Table, r *http.Request) []orderSpec {
-	out := make([]orderSpec, 0)
+	var out []orderSpec
 
 	if len(r.URL.Query()[`order`]) > 0 {
 		orderCols := strings.Split(r.URL.Query()[`order`][0], `,`)
@@ -77,7 +77,7 @@ func selectColumns(t Table, r *http.Request) *sqrl.SelectBuilder {
 }
 
 func parseColumns(t Table, r *http.Request) []string {
-	out := make([]string, 0)
+	var out []string
 
 	if len(r.URL.Query()[`select`]) > 0 {
 		requestColumns := strings.Split(r.URL.Query()[`select`][0], `,`) // Get the first `select` var and forget about any others
