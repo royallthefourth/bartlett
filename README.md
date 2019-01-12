@@ -92,14 +92,20 @@ To order results, add `order` to the query: `/students?order=student_id`
 
 Order by mutliple columns by separating them with `,`: `/students?order=age,grade`
 
-Choose `ASC` or `DESC` by appending `.asc` or `.desc` to the field name: `/students?order=age.asc,grade.desc` 
+Choose `ASC` or `DESC` by appending `.asc` or `.desc` to the field name: `/students?order=age.asc,grade.desc`
 
+##### LIMIT and OFFSET
+
+To restrict result output, add `limit`. The request `/students?limit=10` will return 10 results.
+
+To add an offset, use `offset` in your query: `/students?limit=10&offset=2` will return 10 after skipping the first 2 results.
+ 
 ## Status
 
 This project is under heavy development.
 Bartlett currently supports SQLite3 and MariaDB.
 Postgres support is planned once support for existing databases is more robust.
-Most data types are not yet under test and may not produce good results.
+Most data types are not yet under test and may not produce useful results.
 Some MariaDB types do not have a clear JSON representation. These types are marshaled as `[]byte`.
 
 `WHERE` clauses, `INSERT`, `UPDATE`, `DELETE`, and `JOIN` are all planned for future development.
