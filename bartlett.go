@@ -1,3 +1,4 @@
+// Package bartlett automatically generates an API from your database schema.
 package bartlett
 
 import (

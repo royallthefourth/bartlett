@@ -1,3 +1,4 @@
+// Package mariadb provides a Bartlett driver for MariaDB databases.
 package mariadb
 
 import (

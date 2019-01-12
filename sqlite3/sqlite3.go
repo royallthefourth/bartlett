@@ -1,3 +1,4 @@
+// Package sqlite3 provides a Bartlett driver for SQLite3 databases.
 package sqlite3
 
 import (
