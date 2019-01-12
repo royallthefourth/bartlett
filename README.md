@@ -1,5 +1,6 @@
 # Bartlett
 
+[![GoDoc](https://godoc.org/github.com/royallthefourth/bartlett?status.svg)](https://godoc.org/github.com/royallthefourth/bartlett)
 [![Go Report Card](https://goreportcard.com/badge/github.com/royallthefourth/bartlett)](https://goreportcard.com/report/github.com/royallthefourth/bartlett)
 [![Build Status](https://travis-ci.org/royallthefourth/bartlett.svg?branch=master)](https://travis-ci.org/royallthefourth/bartlett)
 [![codecov](https://codecov.io/gh/royallthefourth/bartlett/branch/master/graph/badge.svg)](https://codecov.io/gh/royallthefourth/bartlett)
