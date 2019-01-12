@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"github.com/elgris/sqrl"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 func (b Bartlett) buildSelect(t Table, r *http.Request) (*sqrl.SelectBuilder, error) {
 	query := selectColumns(t, r).From(t.Name)
 	query = selectOrder(query, t, r)
+	query = selectLimit(query, r)
 
 	if t.UserID != `` {
 		userID, err := b.Users(r)
@@ -87,6 +89,31 @@ func parseColumns(t Table, r *http.Request) []string {
 	}
 
 	return out
+}
+
+func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder {
+	var (
+		err error
+		limit int
+		offset int
+	)
+	if len(r.URL.Query()[`limit`]) > 0 {
+		limit, err = strconv.Atoi(r.URL.Query()[`limit`][0])
+		if err != nil || limit < 0 {
+			limit = 0
+		}
+	}
+	if limit > 0 && len(r.URL.Query()[`offset`]) > 0 {
+		offset, err = strconv.Atoi(r.URL.Query()[`offset`][0])
+		if err != nil || offset < 0 {
+			offset = 0
+		}
+	}
+	if limit > 0 {
+		query = query.Limit(uint64(limit)).Offset(uint64(offset))
+	}
+
+	return query
 }
 
 func sliceContains(haystack []string, needle string) bool {

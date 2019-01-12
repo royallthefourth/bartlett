@@ -72,3 +72,21 @@ func TestSelectOrder(t *testing.T) {
 		t.Fatalf(`Expected "ORDER BY grade ASC, student_id DESC" but got %s`, rawSQL)
 	}
 }
+
+func TestSelectLimit(t *testing.T) {
+	req, _ := http.NewRequest("GET", "http://example.com?limit=10", nil)
+	query := sqrl.Select(`*`).From(`students`)
+	query = selectLimit(query, req)
+	rawSQL, _, _ := query.ToSql()
+	if !strings.Contains(rawSQL, `LIMIT 10 OFFSET 0`) {
+		t.Errorf(`Expected "LIMIT 10 OFFSET 0" but got %s`, rawSQL)
+	}
+
+	req, _ = http.NewRequest("GET", "http://example.com?limit=10&offset=5", nil)
+	query = sqrl.Select(`*`).From(`students`)
+	query = selectLimit(query, req)
+	rawSQL, _, _ = query.ToSql()
+	if !strings.Contains(rawSQL, `LIMIT 10 OFFSET 5`) {
+		t.Errorf(`Expected "LIMIT 10 OFFSET 0" but got %s`, rawSQL)
+	}
+}
