@@ -11,15 +11,27 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
 )
 
 // SQLite3 provides logic specific to SQLite3 databases.
-type SQLite3 struct{}
+type SQLite3 struct {
+	tables map[string][]column
+}
+
+type column struct {
+	dataType reflect.Type
+	name     string
+}
 
 // GetColumns queries `sqlite_master` and returns a list of valid column names.
-func (SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
-	var createQuery string
+func (driver *SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+	if driver.tables == nil {
+		driver.tables = make(map[string][]column)
+	}
+	var (
+		createQuery string
+		out []string
+	)
 	rows, err := sqrl.Select(`sql`).From(`sqlite_master`).Where(`name = ?`, t.Name).RunWith(db).Query()
 	if err != nil {
 		return []string{}, err
@@ -31,11 +43,16 @@ func (SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
 		return []string{}, err
 	}
 
-	return parseCreateTable(createQuery), err
+	driver.tables[t.Name] = parseCreateTable(createQuery)
+	for _, col := range driver.tables[t.Name] {
+		out = append(out, col.name)
+	}
+
+	return out, err
 }
 
 // MarshalResults converts results from SQLite3 types to Go types, then outputs JSON to the ResponseWriter.
-func (SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
+func (driver SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf(`column error: %v`, err)
@@ -52,33 +69,14 @@ func (SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 		if scanType != nil {
 			types[i] = scanType
 		} else {
-			switch strings.ToLower(columnType.DatabaseTypeName()) {
-			case `null`:
-				types[i] = nil
-			case `integer`:
-				types[i] = reflect.TypeOf(int(0))
-			case `float`:
-				types[i] = reflect.TypeOf(float64(0))
-			case `blob`:
-				types[i] = reflect.TypeOf([]byte{})
-			case `text`:
-				types[i] = reflect.TypeOf(``)
-			case `varchar`:
-				types[i] = reflect.TypeOf(``)
-			case `timestamp`:
-				types[i] = reflect.TypeOf(time.Now())
-			case `datetime`:
-				types[i] = reflect.TypeOf(time.Now())
-			default:
-				return fmt.Errorf(`scantype is nil for column %+v`, columnType)
-			}
+			types[i] = dbTypeToGoType(columnType.DatabaseTypeName())
 		}
 	}
 
 	values := make([]interface{}, len(columnTypes))
 	data := make(map[string]interface{})
 
-	_, err = w.Write([]byte{'['}) // Start the
+	_, err = w.Write([]byte{'['}) // Start the output array
 	if err != nil {
 		return fmt.Errorf(`failed to write opening bracket: %s`, err)
 	}
@@ -122,12 +120,36 @@ func (SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	return err
 }
 
-func parseCreateTable(sql string) (columns []string) {
+func dbTypeToGoType(dbType string) reflect.Type {
+	t := strings.TrimSpace(strings.ToLower(dbType))
+	if strings.Contains(t, `int`) {
+		if strings.Contains(t, `unsigned`) {
+			return reflect.TypeOf(uint(0))
+		} else {
+			return reflect.TypeOf(int(0))
+		}
+	} else if strings.Contains(t, `char`) {
+		return reflect.TypeOf(``)
+	} else if strings.Contains(t, `real`) ||
+		strings.Contains(t, `double`) ||
+		strings.Contains(t, `float`) {
+		return reflect.TypeOf(float64(0))
+	} else {
+		return reflect.TypeOf([]byte{}) // Guess it's a blob
+	}
+}
+
+func parseCreateTable(sql string) (columns []column) {
 	colSpec := regexp.MustCompile(`.*CREATE\s+TABLE\s+(\S+)\s*\((.*)\).*`)
-	name := regexp.MustCompile(`\s.*`)
+	firstWord := regexp.MustCompile(`\s.*`)
 	specs := strings.Split(colSpec.FindStringSubmatch(sql)[2], `,`)
 	for _, spec := range specs {
-		columns = append(columns, name.ReplaceAllString(strings.TrimSpace(spec), ``))
+		colName := firstWord.ReplaceAllString(strings.TrimSpace(spec), ``)
+		rawType := firstWord.FindString(spec)
+		columns = append(columns, column{
+			dataType: dbTypeToGoType(rawType),
+			name:     colName,
+		})
 	}
 
 	return columns

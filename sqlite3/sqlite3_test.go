@@ -47,7 +47,7 @@ func TestSQLite3(t *testing.T) {
 		},
 	}
 
-	b := bartlett.Bartlett{db, SQLite3{}, tables, dummyUserProvider}
+	b := bartlett.Bartlett{db, &SQLite3{}, tables, dummyUserProvider}
 
 	testSimpleGetAll(t, b)
 	testUserGetAll(t, b)
@@ -105,18 +105,18 @@ func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
 			handlers[i](resp, req) // Fill the response
 
 			if !json.Valid(resp.Body.Bytes()) {
-				t.Fatalf(`Expected valid JSON response but got %s`, resp.Body.String())
+				t.Errorf(`Expected valid JSON response but got %s`, resp.Body.String())
 			}
 
 			teachers := make([]teacher, 0)
 			err = json.Unmarshal(resp.Body.Bytes(), &teachers)
 			if err != nil {
 				t.Logf(resp.Body.String())
-				t.Fatal(err)
+				t.Errorf(err.Error())
 			}
 
 			if teachers[0].Name != `Mr. Smith` {
-				t.Fatalf(`Expected first student to have age 18 but got %s instead`, teachers[0].Name)
+				t.Errorf(`Expected first student to have age 18 but got %s instead`, teachers[0].Name)
 			}
 		}
 	}
@@ -166,7 +166,7 @@ func testUserGetAll(t *testing.T, b bartlett.Bartlett) {
 
 func TestParseCreateTable(t *testing.T) {
 	columns := parseCreateTable(`CREATE TABLE students(age int NOT NULL, grade INT)`)
-	if columns[0] != `age` || columns[1] != `grade` {
+	if columns[0].name != `age` || columns[1].name != `grade` {
 		t.Errorf(`Expected "age" and "grade" but got %+v`, columns)
 	}
 }
