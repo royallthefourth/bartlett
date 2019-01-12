@@ -93,8 +93,8 @@ func parseColumns(t Table, r *http.Request) []string {
 
 func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder {
 	var (
-		err error
-		limit int
+		err    error
+		limit  int
 		offset int
 	)
 	if len(r.URL.Query()[`limit`]) > 0 {
