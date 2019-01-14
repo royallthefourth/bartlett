@@ -80,12 +80,8 @@ func parseColumns(t Table, r *http.Request) []string {
 	var out []string
 
 	if len(r.URL.Query()[`select`]) > 0 {
-		requestColumns := strings.Split(r.URL.Query()[`select`][0], `,`) // Get the first `select` var and forget about any others
-		for _, col := range requestColumns {
-			if sliceContains(t.columns, col) {
-				out = append(out, col)
-			}
-		}
+		requestColumns := strings.Split(r.URL.Query()[`select`][0], `,`) // Get the first `select` var and forget about any others.
+		out = t.validReadColumns(requestColumns)
 	}
 
 	return out

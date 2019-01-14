@@ -12,7 +12,14 @@ import (
 )
 
 // MariaDB provides logic specific to MariaDB and probably other MySQL compatibles, but MariaDB is the target.
-type MariaDB struct{}
+type MariaDB struct {
+	tables map[string][]column
+}
+
+type column struct {
+	dataType reflect.Type
+	name     string
+}
 
 type sqlColumn struct {
 	Field   string
@@ -25,6 +32,7 @@ type sqlColumn struct {
 
 // GetColumns invokes `SHOW COLUMNS` and uses the output to determine valid columns for each table.
 func (MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+	// TODO store columns the way sqlite3 does
 	rows, err := db.Query(fmt.Sprintf(`SHOW COLUMNS FROM %s`, t.Name))
 	if err != nil {
 		return []string{}, err

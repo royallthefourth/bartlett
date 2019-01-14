@@ -52,7 +52,7 @@ func main() {
     
     // Bartlett is not a web application.
     // Instead, it is a tool that allows you to quickly add an API to your existing application.
-    routes, handlers := bartlett.Bartlett{db, mariadb.MariaDB{}, tables, dummyUserProvider}.Routes()
+    routes, handlers := bartlett.Bartlett{db, &mariadb.MariaDB{}, tables, dummyUserProvider}.Routes()
     for i, route := range routes {
     	http.HandleFunc(`/api` + route, handlers[i]) // Adds /api/students to the server.
     }
@@ -66,7 +66,7 @@ func main() {
 #### SELECT
 
 To `SELECT` from a table, make a `GET` request to its corresponding URL.
-For example, `SELECT * FROM students;` agsinst the example above may be achieved by `curl -XGET http://localhost:8080/students`
+For example, `SELECT * FROM students;` against the example above may be achieved by `curl -XGET http://localhost:8080/students`
 The result set will be emitted as a JSON array:
 ```json
 [
@@ -100,6 +100,9 @@ Choose `ASC` or `DESC` by appending `.asc` or `.desc` to the field name: `/stude
 To restrict result output, add `limit`. The request `/students?limit=10` will return 10 results.
 
 To add an offset, use `offset` in your query: `/students?limit=10&offset=2` will return 10 after skipping the first 2 results.
+
+#### INSERT
+
  
 ## Status
 
@@ -109,7 +112,7 @@ Postgres support is planned once support for existing databases is more robust.
 Most data types are not yet under test and may not produce useful results.
 Some MariaDB types do not have a clear JSON representation. These types are marshaled as `[]byte`.
 
-`WHERE` clauses, `INSERT`, `UPDATE`, `DELETE`, and `JOIN` are all planned for future development.
+`WHERE` clauses, `UPDATE`, `DELETE`, and `JOIN` are all planned for future development.
 
 ## Security
 

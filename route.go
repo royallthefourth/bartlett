@@ -1,7 +1,10 @@
 package bartlett
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/buger/jsonparser"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -26,36 +29,108 @@ func (b *Bartlett) Routes() (paths []string, handlers []func(http.ResponseWriter
 	return paths, handlers
 }
 
-func (b Bartlett) handleRoute(table Table) func(http.ResponseWriter, *http.Request) {
+func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(`Content-Type`, `application/json`)
 
-		if r.Method != `GET` {
+		if r.Method == `GET` {
+			b.handleGet(t, w, r)
+		} else if r.Method == `POST` {
+			b.handlePost(t, w, r)
+		} else {
 			w.WriteHeader(http.StatusNotImplemented)
 			return
 		}
-
-		query, err := b.buildSelect(table, r)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		rows, err := query.RunWith(b.DB).Query()
-		defer rows.Close()
-
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-
-		err = b.Driver.MarshalResults(rows, w)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
 	}
+}
+
+func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
+	query, err := b.buildSelect(t, r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	rows, err := query.RunWith(b.DB).Query()
+	defer rows.Close()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	err = b.Driver.MarshalResults(rows, w)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+}
+
+func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
+	if !t.Writable {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		log.Println(r.RequestURI + ` Invalid insert attempt to read-only ` + t.Name)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "Table %s is read-only"}`, t.Name)))
+		return
+	}
+
+	var userID interface{}
+	if len(t.UserID) > 0 {
+		userID, err := b.Users(r)
+		if err != nil || userID == nil {
+			w.WriteHeader(http.StatusForbidden)
+			log.Println(r.RequestURI + err.Error())
+			return
+		}
+	} else {
+		userID = 0
+	}
+
+	rawBody, err := ioutil.ReadAll(r.Body)
+	if rune(rawBody[0]) != '[' || !json.Valid(rawBody) {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println(r.RequestURI + ` Invalid JSON data post`)
+		_, _ = w.Write([]byte(`{"error": "JSON data should be an array"}`))
+		return
+	}
+
+	tx, err := b.DB.Begin()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	n, err := jsonparser.ArrayEach(rawBody, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
+		query := t.prepareInsert(row, userID)
+		//if t.UserID != `` {
+		//	userID, _ := b.Users(r)
+		//	query = query.Where(sqrl.Eq{t.UserID: userID})
+		//}
+		_, err = query.RunWith(tx).Exec()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(r.RequestURI + err.Error())
+			return
+		}
+
+	})
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	_, _ = w.Write([]byte(fmt.Sprintf(`{"inserts": %d}`, n)))
 }

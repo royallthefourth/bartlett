@@ -22,32 +22,46 @@ func TestSQLite3(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = db.Exec(`INSERT INTO students(age, grade) VALUES(18, 85),(20,91);`)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	_, err = db.Exec(`CREATE TABLE teachers(teacher_id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR);`)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = db.Exec(`INSERT INTO teachers(name) VALUES('Mr. Smith'),('Ms. Key');`)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tables := []bartlett.Table{
 		{
-			Name:   `students`,
-			UserID: `student_id`,
+			Name:     `students`,
+			UserID:   `student_id`,
+			Writable: true,
 		},
 		{
-			Name: `teachers`,
+			Name:     `teachers`,
+			Writable: true,
 		},
 	}
 
 	b := bartlett.Bartlett{db, &SQLite3{}, tables, dummyUserProvider}
+
+	studentPost, err := http.NewRequest(`POST`, `https://example.com/students`, strings.NewReader(`[{"age":18,"grade":85},{"age":20,"grade":91}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	teacherPost, err := http.NewRequest(`POST`, `https://example.com/teachers`, strings.NewReader(`[{"name":"Mr. Smith"},{"name":"Ms. Key"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	routes, handlers := b.Routes()
+
+	for i, route := range routes {
+		if route == `/students` {
+			resp := httptest.NewRecorder()
+			handlers[i](resp, studentPost)
+		} else if route == `/teachers` {
+			resp := httptest.NewRecorder()
+			handlers[i](resp, teacherPost)
+		}
+	}
 
 	testSimpleGetAll(t, b)
 	testUserGetAll(t, b)

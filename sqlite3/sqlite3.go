@@ -30,7 +30,7 @@ func (driver *SQLite3) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error
 	}
 	var (
 		createQuery string
-		out []string
+		out         []string
 	)
 	rows, err := sqrl.Select(`sql`).From(`sqlite_master`).Where(`name = ?`, t.Name).RunWith(db).Query()
 	if err != nil {
