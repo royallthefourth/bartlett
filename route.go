@@ -77,9 +77,12 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userID interface{}
+	var (
+		userID interface{}
+		err    error
+	)
 	if len(t.UserID) > 0 {
-		userID, err := b.Users(r)
+		userID, err = b.Users(r)
 		if err != nil || userID == nil {
 			w.WriteHeader(http.StatusForbidden)
 			log.Println(r.RequestURI + err.Error())
@@ -106,10 +109,6 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 
 	n, err := jsonparser.ArrayEach(rawBody, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
 		query := t.prepareInsert(row, userID)
-		//if t.UserID != `` {
-		//	userID, _ := b.Users(r)
-		//	query = query.Where(sqrl.Eq{t.UserID: userID})
-		//}
 		_, err = query.RunWith(tx).Exec()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
