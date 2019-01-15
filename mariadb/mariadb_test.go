@@ -55,7 +55,7 @@ func TestMariaDB(t *testing.T) {
 		},
 	}
 
-	b := bartlett.Bartlett{db, MariaDB{}, tables, dummyUserProvider}
+	b := bartlett.Bartlett{db, &MariaDB{}, tables, dummyUserProvider}
 
 	testSimpleGetAll(t, b)
 	db.Exec(`DROP TABLE students;`)
