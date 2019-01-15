@@ -22,32 +22,46 @@ func TestSQLite3(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = db.Exec(`INSERT INTO students(age, grade) VALUES(18, 85),(20,91);`)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	_, err = db.Exec(`CREATE TABLE teachers(teacher_id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR);`)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = db.Exec(`INSERT INTO teachers(name) VALUES('Mr. Smith'),('Ms. Key');`)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tables := []bartlett.Table{
 		{
-			Name:   `students`,
-			UserID: `student_id`,
+			Name:     `students`,
+			UserID:   `student_id`,
+			Writable: true,
 		},
 		{
-			Name: `teachers`,
+			Name:     `teachers`,
+			Writable: true,
 		},
 	}
 
-	b := bartlett.Bartlett{db, SQLite3{}, tables, dummyUserProvider}
+	b := bartlett.Bartlett{db, &SQLite3{}, tables, dummyUserProvider}
+
+	studentPost, err := http.NewRequest(`POST`, `https://example.com/students`, strings.NewReader(`[{"age":18,"grade":85},{"age":20,"grade":91}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	teacherPost, err := http.NewRequest(`POST`, `https://example.com/teachers`, strings.NewReader(`[{"name":"Mr. Smith"},{"name":"Ms. Key"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	routes, handlers := b.Routes()
+
+	for i, route := range routes {
+		if route == `/students` {
+			resp := httptest.NewRecorder()
+			handlers[i](resp, studentPost)
+		} else if route == `/teachers` {
+			resp := httptest.NewRecorder()
+			handlers[i](resp, teacherPost)
+		}
+	}
 
 	testSimpleGetAll(t, b)
 	testUserGetAll(t, b)
@@ -105,18 +119,18 @@ func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
 			handlers[i](resp, req) // Fill the response
 
 			if !json.Valid(resp.Body.Bytes()) {
-				t.Fatalf(`Expected valid JSON response but got %s`, resp.Body.String())
+				t.Errorf(`Expected valid JSON response but got %s`, resp.Body.String())
 			}
 
 			teachers := make([]teacher, 0)
 			err = json.Unmarshal(resp.Body.Bytes(), &teachers)
 			if err != nil {
 				t.Logf(resp.Body.String())
-				t.Fatal(err)
+				t.Errorf(err.Error())
 			}
 
 			if teachers[0].Name != `Mr. Smith` {
-				t.Fatalf(`Expected first student to have age 18 but got %s instead`, teachers[0].Name)
+				t.Errorf(`Expected first student to have age 18 but got %s instead`, teachers[0].Name)
 			}
 		}
 	}
@@ -166,7 +180,7 @@ func testUserGetAll(t *testing.T, b bartlett.Bartlett) {
 
 func TestParseCreateTable(t *testing.T) {
 	columns := parseCreateTable(`CREATE TABLE students(age int NOT NULL, grade INT)`)
-	if columns[0] != `age` || columns[1] != `grade` {
+	if columns[0].name != `age` || columns[1].name != `grade` {
 		t.Errorf(`Expected "age" and "grade" but got %+v`, columns)
 	}
 }
