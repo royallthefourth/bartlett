@@ -31,8 +31,10 @@ type sqlColumn struct {
 }
 
 // GetColumns invokes `SHOW COLUMNS` and uses the output to determine valid columns for each table.
-func (MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
-	// TODO store columns the way sqlite3 does
+func (driver *MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
+	if driver.tables == nil {
+		driver.tables = make(map[string][]column)
+	}
 	rows, err := db.Query(fmt.Sprintf(`SHOW COLUMNS FROM %s`, t.Name))
 	if err != nil {
 		return []string{}, err
@@ -47,6 +49,7 @@ func (MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error) {
 			return columns, err
 		}
 		columns = append(columns, c.Field)
+		driver.tables[t.Name] = append(driver.tables[t.Name], column{name: c.Field, dataType:mysqlTypeToGo(c.Type)})
 	}
 
 	return []string{}, err

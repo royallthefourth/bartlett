@@ -41,10 +41,10 @@ func TestSelect(t *testing.T) {
 
 	rawSQL, args, _ := builder.ToSql()
 	if args[0] != 1 {
-		t.Fatalf(`Expected userID arg to be 1 but got %v instead`, args[0])
+		t.Errorf(`Expected userID arg to be 1 but got %v instead`, args[0])
 	}
 	if !strings.Contains(rawSQL, `student_id =`) {
-		t.Fatalf(`Expected query to require student_id but criterion not found in %s`, rawSQL)
+		t.Errorf(`Expected query to require student_id but criterion not found in %s`, rawSQL)
 	}
 }
 
