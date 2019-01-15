@@ -103,6 +103,12 @@ To add an offset, use `offset` in your query: `/students?limit=10&offset=2` will
 
 #### INSERT
 
+To write rows to a table, make a `POST` request to the corresponding table's URL.
+Your request should include a payload in the form of a JSON array of rows to insert.
+
+To generate your own surrogate key for each row, identify in your `Table` struct an `IDColumn`.
+Provide a function that returns a new ID each time it's invoked.
+This column will be protected from tampering by users. The `UserID` column is also filtered out incoming `POST` requests.
  
 ## Status
 

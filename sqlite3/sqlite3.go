@@ -125,18 +125,16 @@ func dbTypeToGoType(dbType string) reflect.Type {
 	if strings.Contains(t, `int`) {
 		if strings.Contains(t, `unsigned`) {
 			return reflect.TypeOf(uint(0))
-		} else {
-			return reflect.TypeOf(int(0))
 		}
+		return reflect.TypeOf(int(0))
 	} else if strings.Contains(t, `char`) {
 		return reflect.TypeOf(``)
 	} else if strings.Contains(t, `real`) ||
 		strings.Contains(t, `double`) ||
 		strings.Contains(t, `float`) {
 		return reflect.TypeOf(float64(0))
-	} else {
-		return reflect.TypeOf([]byte{}) // Guess it's a blob
 	}
+	return reflect.TypeOf([]byte{}) // Guess it's a blob
 }
 
 func parseCreateTable(sql string) (columns []column) {

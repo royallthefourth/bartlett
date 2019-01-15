@@ -49,7 +49,7 @@ func (driver *MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error
 			return columns, err
 		}
 		columns = append(columns, c.Field)
-		driver.tables[t.Name] = append(driver.tables[t.Name], column{name: c.Field, dataType:mysqlTypeToGo(c.Type)})
+		driver.tables[t.Name] = append(driver.tables[t.Name], column{name: c.Field, dataType: mysqlTypeToGo(c.Type)})
 	}
 
 	return []string{}, err

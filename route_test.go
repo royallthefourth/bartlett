@@ -54,9 +54,9 @@ func TestPostRoute(t *testing.T) {
 		DB:     db,
 		Driver: dummyDriver{},
 		Tables: []Table{
-			{columns: []string{`a`,`b`},
-				Name: `letters`,
-	Writable:true},
+			{columns: []string{`a`, `b`},
+				Name:     `letters`,
+				Writable: true},
 		},
 		Users: dummyUserProvider,
 	}
@@ -100,7 +100,6 @@ func TestPostReadOnly(t *testing.T) {
 
 	_, handlers := b.Routes()
 
-
 	req, err := http.NewRequest(
 		`POST`,
 		`https://example.com/letters`,
@@ -125,13 +124,12 @@ func TestPostInvalid(t *testing.T) {
 		DB:     db,
 		Driver: dummyDriver{},
 		Tables: []Table{
-			{Name: `letters`, Writable:true,},
+			{Name: `letters`, Writable: true},
 		},
 		Users: dummyUserProvider,
 	}
 
 	_, handlers := b.Routes()
-
 
 	req, err := http.NewRequest(
 		`POST`,
@@ -157,11 +155,11 @@ func TestPostForbidden(t *testing.T) {
 		DB:     db,
 		Driver: dummyDriver{},
 		Tables: []Table{
-			{Name: `letters`, UserID: `user_id`, Writable:true,},
+			{Name: `letters`, UserID: `user_id`, Writable: true},
 		},
 		Users: func(_ *http.Request) (interface{}, error) {
-		return ``, errors.New(`invalid user`)
-	},
+			return ``, errors.New(`invalid user`)
+		},
 	}
 
 	_, handlers := b.Routes()
