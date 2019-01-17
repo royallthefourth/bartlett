@@ -122,9 +122,9 @@ Some MariaDB types do not have a clear JSON representation. These types are mars
 
 ## Security
 
-Taking user input from the web to paste into a SQL query does prevent some hazards.
+Taking user input from the web to paste into a SQL query does present some hazards.
 The only place where user input is placed into queries is by parameter placeholders.
-All other dynamic SQL strings generated from the strings passed into the arguments at startup time, never from the URL.
+All other dynamic SQL strings are generated from the strings passed into the arguments at startup time, never from the URL.
 
 To restrict access per-row, specify a column name in your `Table.UserID`.
 Tables with a `UserID` set will always filter according to `Table.UserID = ?` with the result of the userProvider function.
