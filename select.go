@@ -10,6 +10,7 @@ import (
 
 func (b Bartlett) buildSelect(t Table, r *http.Request) (*sqrl.SelectBuilder, error) {
 	query := selectColumns(t, r).From(t.Name)
+	query = selectWhere(query, t, r)
 	query = selectOrder(query, t, r)
 	query = selectLimit(query, r)
 
@@ -110,6 +111,10 @@ func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder
 	}
 
 	return query
+}
+
+func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.SelectBuilder {
+
 }
 
 func sliceContains(haystack []string, needle string) bool {
