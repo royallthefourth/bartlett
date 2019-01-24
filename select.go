@@ -114,7 +114,24 @@ func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder
 }
 
 func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.SelectBuilder {
+	i := 0
+	columns := make([]string, len(r.URL.Query()))
+	for k := range r.URL.Query() {
+		columns[i] = k
+		i++
+	}
+	columns = t.validReadColumns(columns)
 
+	for column, values := range r.URL.Query() {
+		if !sliceContains(columns, column) {
+			for _, rawCond := range values {
+				cond, val := parseSimpleWhereCond(rawCond)
+				query = query.Where(urlToWhereCond(column, cond), val)
+			}
+		}
+	}
+
+	return query
 }
 
 func sliceContains(haystack []string, needle string) bool {
