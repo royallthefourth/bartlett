@@ -13,7 +13,7 @@ func parseSimpleWhereCond(rawCond string) (cond, val string) {
 		cond = parts[0]
 	}
 
-	val = strings.Replace(rawCond, cond+`.`, ``, -1)
+	val = strings.Replace(rawCond, cond+`.`, ``, 1)
 	return cond, val
 }
 
