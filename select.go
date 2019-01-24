@@ -123,7 +123,7 @@ func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.Sele
 	columns = t.validReadColumns(columns)
 
 	for column, values := range r.URL.Query() {
-		if !sliceContains(columns, column) {
+		if sliceContains(columns, column) {
 			for _, rawCond := range values {
 				cond, val := parseSimpleWhereCond(rawCond)
 				query = query.Where(urlToWhereCond(column, cond), val)
