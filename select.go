@@ -128,8 +128,11 @@ func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.Sele
 				parsedCond, val := parseSimpleWhereCond(rawCond)
 				var cond string
 				if parsedCond == `in` || parsedCond == `not.in` {
-					// TODO learn how to count args from IN queries
-					// TODO convert IN to sqrl.Eq
+					if cond == `not.in` {
+						query = query.Where(sqrl.NotEq{column: whereIn(val)})
+					} else {
+						query = query.Where(sqrl.Eq{column: whereIn(val)})
+					}
 				} else {
 					cond = urlToWhereCond(column, parsedCond)
 					sqlCond, val := rectifyArg(cond, val)

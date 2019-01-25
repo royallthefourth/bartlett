@@ -1,6 +1,7 @@
 package bartlett
 
 import (
+	"encoding/csv"
 	"fmt"
 	"strings"
 )
@@ -61,4 +62,10 @@ func urlToWhereCond(column, condition string) string {
 	default:
 		return ``
 	}
+}
+
+func whereIn(rawVal string) []string {
+	r := csv.NewReader(strings.NewReader(strings.TrimPrefix(strings.TrimSuffix(rawVal, `)`), `(`)))
+	vals, _ := r.Read()
+	return vals
 }

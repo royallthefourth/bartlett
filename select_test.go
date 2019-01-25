@@ -127,11 +127,20 @@ func TestSelectLimit(t *testing.T) {
 
 func TestSelectWhere(t *testing.T) {
 	schema := Table{Name: `students`, columns: []string{`student_id`, `grade`}}
-	req, _ := http.NewRequest("GET", "http://example.com/students?grade=eq.90&student_id=not.eq.25", nil)
+	req, _ := http.NewRequest(
+		"GET",
+		"http://example.com/students?grade=eq.90&student_id=not.eq.25&student_id=in.(10,20,30)&grade=like.a*c",
+		nil)
 	query := selectColumns(schema, req).From(schema.Name)
 	query = selectWhere(query, schema, req)
 	rawSQL, _, _ := query.ToSql()
 	if !strings.Contains(rawSQL, `student_id != ?`) || !strings.Contains(rawSQL, `grade = ?`) {
-		t.Fatalf(`Expected "grade = ? AND student_id != ?" but got %s`, rawSQL)
+		t.Errorf(`Expected "grade = ? AND student_id != ?" but got %s`, rawSQL)
+	}
+	if !strings.Contains(rawSQL, `IN (?,?,?)`) {
+		t.Errorf(`Expected "IN (?,?,?)" but got %s`, rawSQL)
+	}
+	if !strings.Contains(rawSQL, `LIKE ?`) {
+		t.Errorf(`Expected "IN (?,?,?)" but got %s`, rawSQL)
 	}
 }
