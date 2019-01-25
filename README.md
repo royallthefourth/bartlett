@@ -63,7 +63,7 @@ func main() {
 
 ### Querying
 
-#### SELECT
+#### `SELECT`
 
 To `SELECT` from a table, make a `GET` request to its corresponding URL.
 For example, `SELECT * FROM students;` against the example above may be achieved by `curl -XGET http://localhost:8080/students`
@@ -87,7 +87,26 @@ Note that all results are emitted as an array, even if there is only one row.
 Requests may filter columns by the `select=` query parameter to cut out irrelevant data.
 Use `,` to separate column names: `/students?select=student_id,grade`
 
-##### ORDER BY
+##### `WHERE`
+
+To filter on simple `WHERE` conditions, specify a column name as a query string parameter and the conditions as the value.
+For example: `/students?age=eq.20` produces `WHERE age = 20`.
+
+| Operator  | SQL       | Note                      |
+| --------- | --------- | ------------------------- |
+|   `eq`    |   `=`     |                           |
+|   `neq`   |   `!=`    |                           |
+|   `gt`    |   `>`     |                           |
+|   `gte`   |   `>=`    |                           |
+|   `lt`    |   `<`     |                           |
+|   `lte`   |   `<=`    |                           |
+|   `like`  |   `LIKE`  | use `*` in place of `%`   |
+|   `is`    |   `IS`    | eg `is.true` or `is.null` |
+|   `in`    |   `IN`    | eg `in."hi, there","bye"` |
+
+Any of these conditions can be negated by prefixing it with `not.` eg `/students?age=not.eq.20`
+
+##### `ORDER BY`
 
 To order results, add `order` to the query: `/students?order=student_id`
 
@@ -95,13 +114,13 @@ Order by mutliple columns by separating them with `,`: `/students?order=age,grad
 
 Choose `ASC` or `DESC` by appending `.asc` or `.desc` to the field name: `/students?order=age.asc,grade.desc`
 
-##### LIMIT and OFFSET
+##### `LIMIT` and `OFFSET`
 
 To restrict result output, add `limit`. The request `/students?limit=10` will return 10 results.
 
 To add an offset, use `offset` in your query: `/students?limit=10&offset=2` will return 10 after skipping the first 2 results.
 
-#### INSERT
+#### `INSERT`
 
 To write rows to a table, make a `POST` request to the corresponding table's URL.
 Your request should include a payload in the form of a JSON array of rows to insert.

@@ -10,6 +10,7 @@ import (
 
 func (b Bartlett) buildSelect(t Table, r *http.Request) (*sqrl.SelectBuilder, error) {
 	query := selectColumns(t, r).From(t.Name)
+	query = selectWhere(query, t, r)
 	query = selectOrder(query, t, r)
 	query = selectLimit(query, r)
 
@@ -107,6 +108,38 @@ func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder
 	}
 	if limit > 0 {
 		query = query.Limit(uint64(limit)).Offset(uint64(offset))
+	}
+
+	return query
+}
+
+func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.SelectBuilder {
+	i := 0
+	columns := make([]string, len(r.URL.Query()))
+	for k := range r.URL.Query() {
+		columns[i] = k
+		i++
+	}
+	columns = t.validReadColumns(columns)
+
+	for column, values := range r.URL.Query() {
+		if sliceContains(columns, column) {
+			for _, rawCond := range values {
+				parsedCond, val := parseSimpleWhereCond(rawCond)
+				var cond string
+				if parsedCond == `in` || parsedCond == `not.in` {
+					if cond == `not.in` {
+						query = query.Where(sqrl.NotEq{column: whereIn(val)})
+					} else {
+						query = query.Where(sqrl.Eq{column: whereIn(val)})
+					}
+				} else {
+					cond = urlToWhereCond(column, parsedCond)
+					sqlCond, val := rectifyArg(cond, val)
+					query = query.Where(sqlCond, val)
+				}
+			}
+		}
 	}
 
 	return query
