@@ -92,9 +92,16 @@ Use `,` to separate column names: `/students?select=student_id,grade`
 To filter on simple `WHERE` conditions, specify a column name as a query string parameter and the conditions as the value.
 For example: `/students?age=eq.20` produces `WHERE age = 20`.
 
-| Operator | SQL |
-| -------- | --- |
-| `eq`     | `=` |
+| Operator  | SQL       | Note                      |
+| --------- | --------- | ------------------------- |
+|   `eq`    |   `=`     |                           |
+|   `neq`   |   `!=`    |                           |
+|   `gt`    |   `>`     |                           |
+|   `gte`   |   `>=`    |                           |
+|   `lt`    |   `<`     |                           |
+|   `lte`   |   `<=`    |                           |
+|   `like`  |   `LIKE`  | use `*` in place of `%`   |
+|   `is`    |   `IS`    | eg `is.true` or `is.null` |
 
 Any of these conditions can be negated by prefixing it with `not.` eg `/students?age=not.eq.20`
 

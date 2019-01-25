@@ -125,8 +125,16 @@ func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.Sele
 	for column, values := range r.URL.Query() {
 		if sliceContains(columns, column) {
 			for _, rawCond := range values {
-				cond, val := parseSimpleWhereCond(rawCond)
-				query = query.Where(urlToWhereCond(column, cond), val)
+				parsedCond, val := parseSimpleWhereCond(rawCond)
+				var cond string
+				if parsedCond == `in` || parsedCond == `not.in` {
+					// TODO learn how to count args from IN queries
+					// TODO convert IN to sqrl.Eq
+				} else {
+					cond = urlToWhereCond(column, parsedCond)
+					sqlCond, val := rectifyArg(cond, val)
+					query = query.Where(sqlCond, val)
+				}
 			}
 		}
 	}

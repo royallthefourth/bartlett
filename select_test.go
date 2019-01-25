@@ -62,6 +62,16 @@ func TestParseColumns(t *testing.T) {
 	}
 }
 
+func TestSelectColumns(t *testing.T) {
+	schema := Table{columns: []string{`student_id`, `grade`}}
+	req, _ := http.NewRequest("GET", "http://example.com?select=student_id,grade", nil)
+	query := selectColumns(schema, req)
+	rawSQL, _, _ := query.ToSql()
+	if !strings.Contains(rawSQL, `student_id, grade`) {
+		t.Fatalf(`Expected "SELECT student_id, grade" but got %s`, rawSQL)
+	}
+}
+
 func TestSelectOrder(t *testing.T) {
 	schema := Table{columns: []string{`student_id`, `grade`}}
 	req, _ := http.NewRequest("GET", "http://example.com?order=grade.asc,student_id", nil)
@@ -88,5 +98,40 @@ func TestSelectLimit(t *testing.T) {
 	rawSQL, _, _ = query.ToSql()
 	if !strings.Contains(rawSQL, `LIMIT 10 OFFSET 5`) {
 		t.Errorf(`Expected "LIMIT 10 OFFSET 0" but got %s`, rawSQL)
+	}
+
+	req, _ = http.NewRequest("GET", "http://example.com?limit=-1&offset=5", nil)
+	query = sqrl.Select(`*`).From(`students`)
+	query = selectLimit(query, req)
+	rawSQL, _, _ = query.ToSql()
+	if strings.Contains(rawSQL, `LIMIT`) {
+		t.Errorf(`Expected no LIMIT but got %s`, rawSQL)
+	}
+
+	req, _ = http.NewRequest("GET", "http://example.com?limit=5&offset=-1", nil)
+	query = sqrl.Select(`*`).From(`students`)
+	query = selectLimit(query, req)
+	rawSQL, _, _ = query.ToSql()
+	if !strings.Contains(rawSQL, `OFFSET 0`) {
+		t.Errorf(`Expected "OFFSET 0" but got %s`, rawSQL)
+	}
+
+	req, _ = http.NewRequest("GET", "http://example.com?limit=asdf", nil)
+	query = sqrl.Select(`*`).From(`students`)
+	query = selectLimit(query, req)
+	rawSQL, _, _ = query.ToSql()
+	if strings.Contains(rawSQL, `LIMIT`) {
+		t.Errorf(`Expected no LIMIT but got %s`, rawSQL)
+	}
+}
+
+func TestSelectWhere(t *testing.T) {
+	schema := Table{Name: `students`, columns: []string{`student_id`, `grade`}}
+	req, _ := http.NewRequest("GET", "http://example.com/students?grade=eq.90&student_id=not.eq.25", nil)
+	query := selectColumns(schema, req).From(schema.Name)
+	query = selectWhere(query, schema, req)
+	rawSQL, _, _ := query.ToSql()
+	if !strings.Contains(rawSQL, `student_id != ?`) || !strings.Contains(rawSQL, `grade = ?`) {
+		t.Fatalf(`Expected "grade = ? AND student_id != ?" but got %s`, rawSQL)
 	}
 }
