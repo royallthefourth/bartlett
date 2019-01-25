@@ -102,6 +102,7 @@ For example: `/students?age=eq.20` produces `WHERE age = 20`.
 |   `lte`   |   `<=`    |                           |
 |   `like`  |   `LIKE`  | use `*` in place of `%`   |
 |   `is`    |   `IS`    | eg `is.true` or `is.null` |
+|   `in`    |   `IN`    | eg `in."hi, there","bye"` |
 
 Any of these conditions can be negated by prefixing it with `not.` eg `/students?age=not.eq.20`
 
