@@ -84,8 +84,7 @@ The result set will be emitted as a JSON array:
 ```
 Note that all results are emitted as an array, even if there is only one row.
 
-Requests may filter columns by the `select=` query parameter to cut out irrelevant data.
-Use `,` to separate column names: `/students?select=student_id,grade`
+Requests may filter columns by the `select=` query parameter, eg `/students?select=student_id,grade`
 
 ##### `WHERE`
 
