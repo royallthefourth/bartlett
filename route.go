@@ -171,7 +171,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s in %s"}`, err.Error(), rawBody)))
 		return
 	}
 
@@ -205,7 +205,8 @@ func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID in
 		userID = 0
 	}
 
-	rawBody, err := ioutil.ReadAll(r.Body)
+	buf, _ := r.GetBody()
+	rawBody, err := ioutil.ReadAll(buf)
 	if rune(rawBody[0]) != '[' || !json.Valid(rawBody) {
 		status = http.StatusBadRequest
 		err = fmt.Errorf(`JSON data should be an array`)
