@@ -33,13 +33,14 @@ func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) 
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(`Content-Type`, `application/json`)
 
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			b.handleGet(t, w, r)
-		} else if r.Method == http.MethodPost {
+		case http.MethodPost:
 			b.handlePost(t, w, r)
-		} else if r.Method == http.MethodDelete {
+		case http.MethodDelete:
 			b.handleDelete(t, w, r)
-		} else {
+		default:
 			w.WriteHeader(http.StatusNotImplemented)
 			return
 		}
