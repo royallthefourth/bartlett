@@ -81,7 +81,7 @@ func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) 
 
 	query, err := b.buildDelete(t, r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		log.Println(r.RequestURI + err.Error())
 		return
 	}

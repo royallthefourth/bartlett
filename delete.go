@@ -71,7 +71,7 @@ func deleteWhere(query *sqrl.DeleteBuilder, t Table, r *http.Request) (*sqrl.Del
 				parsedCond, val := parseSimpleWhereCond(rawCond)
 				var cond string
 				if parsedCond == `in` || parsedCond == `not.in` {
-					if cond == `not.in` {
+					if parsedCond == `not.in` {
 						query = query.Where(sqrl.NotEq{column: whereIn(val)})
 					} else {
 						query = query.Where(sqrl.Eq{column: whereIn(val)})
