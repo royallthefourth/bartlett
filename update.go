@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (b Bartlett) buildUpdate(t Table, r *http.Request) (*sqrl.UpdateBuilder, error) {
+func (b Bartlett) buildUpdate(t Table, r *http.Request, userID interface{}) (*sqrl.UpdateBuilder, error) {
 	// TODO add columns and values like INSERT
 	query, err := updateWhere(sqrl.Update(t.Name), t, r)
 	if err != nil {
@@ -18,11 +18,7 @@ func (b Bartlett) buildUpdate(t Table, r *http.Request) (*sqrl.UpdateBuilder, er
 	query = updateOrder(query, t, r)
 	query = updateLimit(query, r)
 
-	if t.UserID != `` {
-		userID, err := b.Users(r)
-		if err != nil {
-			return query, err
-		}
+	if t.UserID != `` && userID != nil {
 		query = query.Where(sqrl.Eq{t.UserID: userID})
 	}
 

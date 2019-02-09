@@ -50,19 +50,16 @@ func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) 
 }
 
 func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) {
-	// TODO verify b.validateWrite will work here
-
 	if !t.Writable {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		log.Println(r.RequestURI + ` Invalid insert attempt to read-only ` + t.Name)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "Table %s is read-only"}`, t.Name)))
 		return
 	}
 
-	query, err := b.buildUpdate(t, r)
+	query, err := b.buildDelete(t, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
@@ -71,14 +68,14 @@ func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
 	err = b.Driver.MarshalResults(rows, w)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 }
@@ -87,7 +84,7 @@ func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
 	query, err := b.buildSelect(t, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
@@ -96,32 +93,30 @@ func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
 	err = b.Driver.MarshalResults(rows, w)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 }
 
 func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
-	// TODO use b.validateWrite
-
-	if !t.Writable {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		log.Println(r.RequestURI + ` Invalid insert attempt to read-only ` + t.Name)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "Table %s is read-only"}`, t.Name)))
+	status, userID, err := b.validateWrite(t, r)
+	if err != nil {
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
-	query, err := b.buildUpdate(t, r)
+	query, err := b.buildUpdate(t, r, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
@@ -130,14 +125,14 @@ func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
 	err = b.Driver.MarshalResults(rows, w)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 }
@@ -153,7 +148,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 	tx, err := b.DB.Begin()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
@@ -163,7 +158,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		_, err = query.RunWith(tx).Exec()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 			return
 		}
 
@@ -178,7 +173,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 	err = tx.Commit()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
@@ -194,7 +189,7 @@ func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID in
 		return status, nil, err
 	}
 
-	if len(t.UserID) > 0 {
+	if t.UserID != `` {
 		userID, err = b.Users(r)
 		if err != nil || userID == nil {
 			status = http.StatusForbidden
