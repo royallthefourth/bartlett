@@ -40,6 +40,8 @@ func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) 
 			b.handlePost(t, w, r)
 		case http.MethodDelete:
 			b.handleDelete(t, w, r)
+		case http.MethodPatch:
+			b.handlePatch(t, w, r)
 		default:
 			w.WriteHeader(http.StatusNotImplemented)
 			return
@@ -47,35 +49,9 @@ func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) 
 	}
 }
 
-func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
-	query, err := b.buildSelect(t, r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
-		return
-	}
-
-	rows, err := query.RunWith(b.DB).Query()
-	defer rows.Close()
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
-		return
-	}
-
-	err = b.Driver.MarshalResults(rows, w)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
-		return
-	}
-}
-
 func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) {
 	if !t.Writable {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		log.Println(r.RequestURI + ` Invalid insert attempt to read-only ` + t.Name)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "Table %s is read-only"}`, t.Name)))
 		return
 	}
@@ -83,7 +59,7 @@ func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) 
 	query, err := b.buildDelete(t, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
@@ -92,62 +68,91 @@ func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
 	err = b.Driver.MarshalResults(rows, w)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 }
 
-func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
-	if !t.Writable {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		log.Println(r.RequestURI + ` Invalid insert attempt to read-only ` + t.Name)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "Table %s is read-only"}`, t.Name)))
+func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
+	query, err := b.buildSelect(t, r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
-	var (
-		userID interface{}
-		err    error
-	)
-	if len(t.UserID) > 0 {
-		userID, err = b.Users(r)
-		if err != nil || userID == nil {
-			w.WriteHeader(http.StatusForbidden)
-			log.Println(r.RequestURI + err.Error())
-			return
-		}
-	} else {
-		userID = 0
+	rows, err := query.RunWith(b.DB).Query()
+	defer rows.Close()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
 	}
 
-	rawBody, err := ioutil.ReadAll(r.Body)
-	if rune(rawBody[0]) != '[' || !json.Valid(rawBody) {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Println(r.RequestURI + ` Invalid JSON data post`)
-		_, _ = w.Write([]byte(`{"error": "JSON data should be an array"}`))
+	err = b.Driver.MarshalResults(rows, w)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
+	}
+}
+
+func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
+	status, userID, err := b.validateWrite(t, r)
+	if err != nil {
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
+	}
+
+	query, err := b.buildUpdate(t, r, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
+	}
+
+	_, err = query.RunWith(b.DB).Exec()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
+	status, userID, err := b.validateWrite(t, r)
+	if err != nil {
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
 	tx, err := b.DB.Begin()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
+	rawBody, _ := ioutil.ReadAll(r.Body)
 	n, err := jsonparser.ArrayEach(rawBody, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
 		query := t.prepareInsert(row, userID)
 		_, err = query.RunWith(tx).Exec()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(r.RequestURI + err.Error())
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 			return
 		}
 
@@ -155,16 +160,53 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s in %s"}`, err.Error(), rawBody)))
 		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(r.RequestURI + err.Error())
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
 	_, _ = w.Write([]byte(fmt.Sprintf(`{"inserts": %d}`, n)))
+}
+
+func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID interface{}, err error) {
+	status = http.StatusOK
+
+	if !t.Writable {
+		status = http.StatusMethodNotAllowed
+		err = fmt.Errorf(`table %s is read-only`, t.Name)
+		return status, nil, err
+	}
+
+	if t.UserID != `` {
+		userID, err = b.Users(r)
+		if err != nil || userID == nil {
+			status = http.StatusForbidden
+			err = fmt.Errorf(`failed to generate userID: %s`, err.Error())
+			return status, nil, err
+		}
+	} else {
+		userID = 0
+	}
+
+	buf, _ := r.GetBody()
+	rawBody, err := ioutil.ReadAll(buf)
+	if !json.Valid(rawBody) {
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`JSON data not valid`)
+		return status, userID, err
+	}
+
+	if r.Method != http.MethodPatch && rune(rawBody[0]) != '[' {
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`JSON data should be an array`)
+		return status, userID, err
+	}
+
+	return status, userID, err
 }

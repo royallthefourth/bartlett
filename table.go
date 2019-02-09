@@ -50,6 +50,18 @@ func (t Table) prepareInsert(inputBody []byte, userID interface{}) *sqrl.InsertB
 	return query.Values(vals...)
 }
 
+func (t Table) prepareUpdate(inputBody []byte, userID interface{}, query *sqrl.UpdateBuilder) *sqrl.UpdateBuilder {
+	validCols := t.validWriteColumns()
+	_ = jsonparser.ObjectEach(inputBody, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
+		if sliceContains(validCols, string(key)) {
+			query.Set(string(key), val)
+		}
+		return nil
+	})
+
+	return query
+}
+
 // validReadColumns strips out columns that are not part of the table schema.
 func (t Table) validReadColumns(cols []string) []string {
 	var out []string

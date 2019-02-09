@@ -128,6 +128,20 @@ To generate your own surrogate key for each row, identify in your `Table` struct
 Provide a function that returns a new ID each time it's invoked.
 This column will be protected from tampering by users. The `UserID` column is also filtered out incoming `POST` requests.
 
+#### `UPDATE`
+
+To run an `UPDATE` query, issue a `PATCH` request.
+Set your `WHERE` params on the URL exactly the way you do with a `SELECT`.
+Any `PATCH` requests that do not have a `WHERE` will be rejected for your safety.
+
+`PATCH` requests must include a JSON payload body with the fields to be updated and their values:
+```json
+{
+  "age": 71,
+  "name": "Alex"
+}
+```
+
 #### `DELETE`
 
 To delete rows from a table, make a `DELETE` request to the corresponding table's URL.
