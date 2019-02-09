@@ -157,8 +157,6 @@ Postgres support is planned once support for existing databases is more robust.
 Most data types are not yet under test and may not produce useful results.
 Some MariaDB types do not have a clear JSON representation. These types are marshaled as `[]byte`.
 
-`WHERE` clauses, `UPDATE`, and `JOIN` are all planned for future development.
-
 ## Security
 
 Taking user input from the web to paste into a SQL query does present some hazards.
