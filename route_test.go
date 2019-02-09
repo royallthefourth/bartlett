@@ -30,7 +30,7 @@ func TestGetRoute(t *testing.T) {
 	}
 
 	mock.ExpectQuery(`SELECT \* FROM students`).WillReturnRows(sqlmock.NewRows([]string{`name`, `age`}))
-	req, err := http.NewRequest(`GET`, `https://example.com/teachers`, strings.NewReader(``))
+	req, err := http.NewRequest(http.MethodGet, `https://example.com/teachers`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,6 +38,40 @@ func TestGetRoute(t *testing.T) {
 	handlers[0](resp, req)
 	if resp.Code != http.StatusOK {
 		t.Fatalf(`Expected "200" but got %d for status code`, resp.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestDeleteRoute(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	b := Bartlett{
+		DB:     db,
+		Driver: dummyDriver{},
+		Tables: []Table{
+			{
+				Name:     `students`,
+				Writable: true,
+			},
+		},
+		Users: dummyUserProvider,
+	}
+
+	_, handlers := b.Routes()
+
+	req, err := http.NewRequest(http.MethodDelete, `https://example.com/students`, strings.NewReader(``))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+	handlers[0](resp, req)
+	if resp.Code != http.StatusBadRequest {
+		t.Fatalf(`Expected "400" but got %d for status code`, resp.Code)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -67,7 +101,7 @@ func TestPostRoute(t *testing.T) {
 	mock.ExpectExec(`INSERT INTO letters`).WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectCommit()
 	req, err := http.NewRequest(
-		`POST`,
+		http.MethodPost,
 		`https://example.com/letters`,
 		strings.NewReader(`[{"a": "hello", "b": 5723}]`))
 	if err != nil {
@@ -101,7 +135,7 @@ func TestPostReadOnly(t *testing.T) {
 	_, handlers := b.Routes()
 
 	req, err := http.NewRequest(
-		`POST`,
+		http.MethodPost,
 		`https://example.com/letters`,
 		strings.NewReader(`[{"a": "hello", "b": 5723}]`))
 	if err != nil {
@@ -132,7 +166,7 @@ func TestPostInvalid(t *testing.T) {
 	_, handlers := b.Routes()
 
 	req, err := http.NewRequest(
-		`POST`,
+		http.MethodPost,
 		`https://example.com/letters`,
 		strings.NewReader(`[{"a": "hel`))
 	if err != nil {
@@ -168,7 +202,7 @@ func TestPostForbidden(t *testing.T) {
 	mock.ExpectCommit()
 
 	req, err := http.NewRequest(
-		`POST`,
+		http.MethodPost,
 		`https://example.com/letters`,
 		strings.NewReader(`[{"a": "hello", "b": 5723}]`))
 	if err != nil {

@@ -27,7 +27,7 @@ func TestSelect(t *testing.T) {
 		Name:   `students_user`,
 		UserID: `student_id`,
 	}
-	req, err := http.NewRequest(`GET`, `https://example.com/students_user`, strings.NewReader(``))
+	req, err := http.NewRequest(http.MethodGet, `https://example.com/students_user`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func TestSelect(t *testing.T) {
 
 func TestParseColumns(t *testing.T) {
 	schema := Table{columns: []string{`students`, `teachers`}}
-	req, _ := http.NewRequest("GET", "http://example.com?select=students,parents", nil)
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com?select=students,parents", nil)
 
 	cols := parseColumns(schema, req)
 	if len(cols) != 1 {
@@ -64,7 +64,7 @@ func TestParseColumns(t *testing.T) {
 
 func TestSelectColumns(t *testing.T) {
 	schema := Table{columns: []string{`student_id`, `grade`}}
-	req, _ := http.NewRequest("GET", "http://example.com?select=student_id,grade", nil)
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com?select=student_id,grade", nil)
 	query := selectColumns(schema, req)
 	rawSQL, _, _ := query.ToSql()
 	if !strings.Contains(rawSQL, `student_id, grade`) {
@@ -74,7 +74,7 @@ func TestSelectColumns(t *testing.T) {
 
 func TestSelectOrder(t *testing.T) {
 	schema := Table{columns: []string{`student_id`, `grade`}}
-	req, _ := http.NewRequest("GET", "http://example.com?order=grade.asc,student_id", nil)
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com?order=grade.asc,student_id", nil)
 	query := sqrl.Select(`*`).From(`students`)
 	query = selectOrder(query, schema, req)
 	rawSQL, _, _ := query.ToSql()
@@ -84,7 +84,7 @@ func TestSelectOrder(t *testing.T) {
 }
 
 func TestSelectLimit(t *testing.T) {
-	req, _ := http.NewRequest("GET", "http://example.com?limit=10", nil)
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com?limit=10", nil)
 	query := sqrl.Select(`*`).From(`students`)
 	query = selectLimit(query, req)
 	rawSQL, _, _ := query.ToSql()
@@ -92,7 +92,7 @@ func TestSelectLimit(t *testing.T) {
 		t.Errorf(`Expected "LIMIT 10 OFFSET 0" but got %s`, rawSQL)
 	}
 
-	req, _ = http.NewRequest("GET", "http://example.com?limit=10&offset=5", nil)
+	req, _ = http.NewRequest(http.MethodGet, "http://example.com?limit=10&offset=5", nil)
 	query = sqrl.Select(`*`).From(`students`)
 	query = selectLimit(query, req)
 	rawSQL, _, _ = query.ToSql()
@@ -100,7 +100,7 @@ func TestSelectLimit(t *testing.T) {
 		t.Errorf(`Expected "LIMIT 10 OFFSET 0" but got %s`, rawSQL)
 	}
 
-	req, _ = http.NewRequest("GET", "http://example.com?limit=-1&offset=5", nil)
+	req, _ = http.NewRequest(http.MethodGet, "http://example.com?limit=-1&offset=5", nil)
 	query = sqrl.Select(`*`).From(`students`)
 	query = selectLimit(query, req)
 	rawSQL, _, _ = query.ToSql()
@@ -108,7 +108,7 @@ func TestSelectLimit(t *testing.T) {
 		t.Errorf(`Expected no LIMIT but got %s`, rawSQL)
 	}
 
-	req, _ = http.NewRequest("GET", "http://example.com?limit=5&offset=-1", nil)
+	req, _ = http.NewRequest(http.MethodGet, "http://example.com?limit=5&offset=-1", nil)
 	query = sqrl.Select(`*`).From(`students`)
 	query = selectLimit(query, req)
 	rawSQL, _, _ = query.ToSql()
@@ -116,7 +116,7 @@ func TestSelectLimit(t *testing.T) {
 		t.Errorf(`Expected "OFFSET 0" but got %s`, rawSQL)
 	}
 
-	req, _ = http.NewRequest("GET", "http://example.com?limit=asdf", nil)
+	req, _ = http.NewRequest(http.MethodGet, "http://example.com?limit=asdf", nil)
 	query = sqrl.Select(`*`).From(`students`)
 	query = selectLimit(query, req)
 	rawSQL, _, _ = query.ToSql()
@@ -128,7 +128,7 @@ func TestSelectLimit(t *testing.T) {
 func TestSelectWhere(t *testing.T) {
 	schema := Table{Name: `students`, columns: []string{`student_id`, `grade`}}
 	req, _ := http.NewRequest(
-		"GET",
+		http.MethodGet,
 		"http://example.com/students?grade=eq.90&student_id=not.eq.25&student_id=in.(10,20,30)&grade=like.a*c",
 		nil)
 	query := selectColumns(schema, req).From(schema.Name)
@@ -141,6 +141,6 @@ func TestSelectWhere(t *testing.T) {
 		t.Errorf(`Expected "IN (?,?,?)" but got %s`, rawSQL)
 	}
 	if !strings.Contains(rawSQL, `LIKE ?`) {
-		t.Errorf(`Expected "IN (?,?,?)" but got %s`, rawSQL)
+		t.Errorf(`Expected "LIKE ?" but got %s`, rawSQL)
 	}
 }

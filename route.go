@@ -33,11 +33,14 @@ func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) 
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(`Content-Type`, `application/json`)
 
-		if r.Method == `GET` {
+		switch r.Method {
+		case http.MethodGet:
 			b.handleGet(t, w, r)
-		} else if r.Method == `POST` {
+		case http.MethodPost:
 			b.handlePost(t, w, r)
-		} else {
+		case http.MethodDelete:
+			b.handleDelete(t, w, r)
+		default:
 			w.WriteHeader(http.StatusNotImplemented)
 			return
 		}
@@ -48,6 +51,38 @@ func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
 	query, err := b.buildSelect(t, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	rows, err := query.RunWith(b.DB).Query()
+	defer rows.Close()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+
+	err = b.Driver.MarshalResults(rows, w)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(r.RequestURI + err.Error())
+		return
+	}
+}
+
+func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) {
+	if !t.Writable {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		log.Println(r.RequestURI + ` Invalid insert attempt to read-only ` + t.Name)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "Table %s is read-only"}`, t.Name)))
+		return
+	}
+
+	query, err := b.buildDelete(t, r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		log.Println(r.RequestURI + err.Error())
 		return
 	}
