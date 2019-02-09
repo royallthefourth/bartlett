@@ -110,7 +110,8 @@ func TestPostRoute(t *testing.T) {
 	resp := httptest.NewRecorder()
 	handlers[0](resp, req)
 	if resp.Code != http.StatusOK {
-		t.Errorf(`Expected "200" but got %d for status code`, resp.Code)
+		var b := 
+		t.Errorf(`Expected "200" but got %d for status code in %s`, resp.Code, )
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
