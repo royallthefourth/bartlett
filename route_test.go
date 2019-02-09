@@ -78,6 +78,44 @@ func TestDeleteRoute(t *testing.T) {
 	}
 }
 
+func TestPatchRoute(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	b := Bartlett{
+		DB:     db,
+		Driver: dummyDriver{},
+		Tables: []Table{
+			{
+				Name:     `students`,
+				Writable: true,
+			},
+		},
+		Users: dummyUserProvider,
+	}
+
+	_, handlers := b.Routes()
+
+	mock.ExpectExec(`UPDATE students SET name = \? WHERE id = \?`).
+		WithArgs([]uint8(`todd`), `15`).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	req, err := http.NewRequest(http.MethodPatch, `https://example.com/students?id=eq.15`, strings.NewReader(`{"name":"todd"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+	handlers[0](resp, req)
+	if resp.Code != http.StatusOK {
+		t.Errorf(`Expected "200" but got %d for status code with body %s`, resp.Code, resp.Body.String())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
 func TestPostRoute(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {

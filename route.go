@@ -120,8 +120,7 @@ func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := query.RunWith(b.DB).Query()
-	defer rows.Close()
+	_, err = query.RunWith(b.DB).Exec()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -129,12 +128,7 @@ func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = b.Driver.MarshalResults(rows, w)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
-		return
-	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
@@ -202,7 +196,13 @@ func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID in
 
 	buf, _ := r.GetBody()
 	rawBody, err := ioutil.ReadAll(buf)
-	if rune(rawBody[0]) != '[' || !json.Valid(rawBody) {
+	if !json.Valid(rawBody) {
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`JSON data not valid`)
+		return status, userID, err
+	}
+
+	if r.Method != http.MethodPatch && rune(rawBody[0]) != '[' {
 		status = http.StatusBadRequest
 		err = fmt.Errorf(`JSON data should be an array`)
 		return status, userID, err
