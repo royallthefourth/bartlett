@@ -52,7 +52,8 @@ func main() {
     
     // Bartlett is not a web application.
     // Instead, it is a tool that allows you to quickly add an API to your existing application.
-    routes, handlers := bartlett.Bartlett{db, &mariadb.MariaDB{}, tables, dummyUserProvider}.Routes()
+    b := bartlett.Bartlett{DB: db, Driver: &mariadb.MariaDB{}, Tables: tables, Users: dummyUserProvider}
+    routes, handlers := b.Routes()
     for i, route := range routes {
     	http.HandleFunc(`/api` + route, handlers[i]) // Adds /api/students to the server.
     }
