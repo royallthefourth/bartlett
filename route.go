@@ -194,8 +194,18 @@ func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID in
 		userID = 0
 	}
 
-	buf, _ := r.GetBody()
+	buf, err := r.GetBody()
+	if err != nil {
+		status = http.StatusInternalServerError
+		return status, nil, err
+	}
+
 	rawBody, err := ioutil.ReadAll(buf)
+	if err != nil {
+		status = http.StatusInternalServerError
+		return status, nil, err
+	}
+
 	if !json.Valid(rawBody) {
 		status = http.StatusBadRequest
 		err = fmt.Errorf(`JSON data not valid`)
