@@ -148,7 +148,8 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	n, err := jsonparser.ArrayEach(body, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
+	var n uint
+	_, err = jsonparser.ArrayEach(body, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
 		query := t.prepareInsert(row, userID)
 		_, err = query.RunWith(tx).Exec()
 		if err != nil {
@@ -156,7 +157,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 			return
 		}
-
+		n++
 	})
 
 	if err != nil {
