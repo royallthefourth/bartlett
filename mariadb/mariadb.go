@@ -181,6 +181,6 @@ func mysqlTypeToGo(t string) reflect.Type {
 	case `YEAR`:
 		return reflect.TypeOf(int16(0))
 	default:
-		return nil
+		return reflect.TypeOf(``)
 	}
 }
