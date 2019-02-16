@@ -8,7 +8,6 @@ import (
 	"github.com/royallthefourth/bartlett"
 	"net/http"
 	"reflect"
-	"time"
 )
 
 // MariaDB provides logic specific to MariaDB and probably other MySQL compatibles, but MariaDB is the target.
@@ -132,9 +131,9 @@ func mysqlTypeToGo(t string) reflect.Type {
 	case `TEXT`:
 		return reflect.TypeOf([]byte{})
 	case `DATE`:
-		return reflect.TypeOf(time.Now())
+		return reflect.TypeOf(``)
 	case `DATETIME`:
-		return reflect.TypeOf(time.Now())
+		return reflect.TypeOf(``)
 	case `DECIMAL`:
 		return reflect.TypeOf(``)
 	case `DOUBLE`:
@@ -170,9 +169,9 @@ func mysqlTypeToGo(t string) reflect.Type {
 	case `VARBINARY`:
 		return reflect.TypeOf([]byte{})
 	case `TIME`:
-		return reflect.TypeOf(time.Now())
+		return reflect.TypeOf(``)
 	case `TIMESTAMP`:
-		return reflect.TypeOf(time.Now())
+		return reflect.TypeOf(``)
 	case `SMALLINT`:
 		return reflect.TypeOf(int16(0))
 	case `SET`:
