@@ -4,15 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/elgris/sqrl"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (b Bartlett) buildUpdate(t Table, r *http.Request, userID interface{}) (*sqrl.UpdateBuilder, error) {
-	rawBody, _ := ioutil.ReadAll(r.Body)
-	query := t.prepareUpdate(rawBody, userID, sqrl.Update(t.Name))
+func (b Bartlett) buildUpdate(t Table, r *http.Request, userID interface{}, body []byte) (*sqrl.UpdateBuilder, error) {
+	query := t.prepareUpdate(body, userID, sqrl.Update(t.Name))
 	query, err := updateWhere(query, t, r)
 	if err != nil {
 		return query, err

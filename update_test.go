@@ -23,7 +23,7 @@ func TestUpdate(t *testing.T) {
 
 	b := Bartlett{&sql.DB{}, dummyDriver{}, []Table{table}, dummyUserProvider}
 
-	builder, err := b.buildUpdate(table, req, 1)
+	builder, err := b.buildUpdate(table, req, 1, []byte(`{"grade":25}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestUpdateNeedsWhere(t *testing.T) {
 
 	b := Bartlett{&sql.DB{}, dummyDriver{}, []Table{table}, dummyUserProvider}
 
-	_, err = b.buildUpdate(table, req, 1)
+	_, err = b.buildUpdate(table, req, 1, []byte{})
 	if err == nil {
 		t.Error(`Expected to error due to lack of constraints but got nil error`)
 	}

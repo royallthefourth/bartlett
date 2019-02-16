@@ -106,14 +106,15 @@ func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
 }
 
 func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
-	status, userID, err := b.validateWrite(t, r)
+	body, _ := ioutil.ReadAll(r.Body)
+	status, userID, err := b.validateWrite(t, r, body)
 	if err != nil {
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
 
-	query, err := b.buildUpdate(t, r, userID)
+	query, err := b.buildUpdate(t, r, userID, body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
@@ -132,7 +133,8 @@ func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
 }
 
 func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
-	status, userID, err := b.validateWrite(t, r)
+	body, _ := ioutil.ReadAll(r.Body)
+	status, userID, err := b.validateWrite(t, r, body)
 	if err != nil {
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
@@ -146,8 +148,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rawBody, _ := ioutil.ReadAll(r.Body)
-	n, err := jsonparser.ArrayEach(rawBody, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
+	n, err := jsonparser.ArrayEach(body, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
 		query := t.prepareInsert(row, userID)
 		_, err = query.RunWith(tx).Exec()
 		if err != nil {
@@ -160,7 +161,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s in %s"}`, err.Error(), rawBody)))
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s in %s"}`, err.Error(), body)))
 		return
 	}
 
@@ -174,7 +175,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(fmt.Sprintf(`{"inserts": %d}`, n)))
 }
 
-func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID interface{}, err error) {
+func (b Bartlett) validateWrite(t Table, r *http.Request, body []byte) (status int, userID interface{}, err error) {
 	status = http.StatusOK
 
 	if !t.Writable {
@@ -194,25 +195,13 @@ func (b Bartlett) validateWrite(t Table, r *http.Request) (status int, userID in
 		userID = 0
 	}
 
-	buf, err := r.GetBody()
-	if err != nil {
-		status = http.StatusInternalServerError
-		return status, nil, err
-	}
-
-	rawBody, err := ioutil.ReadAll(buf)
-	if err != nil {
-		status = http.StatusInternalServerError
-		return status, nil, err
-	}
-
-	if !json.Valid(rawBody) {
+	if !json.Valid(body) {
 		status = http.StatusBadRequest
 		err = fmt.Errorf(`JSON data not valid`)
 		return status, userID, err
 	}
 
-	if r.Method != http.MethodPatch && rune(rawBody[0]) != '[' {
+	if r.Method != http.MethodPatch && rune(body[0]) != '[' { // Updated are allowed to be single value; posts are not.
 		status = http.StatusBadRequest
 		err = fmt.Errorf(`JSON data should be an array`)
 		return status, userID, err
