@@ -129,7 +129,7 @@ func mysqlTypeToGo(t string) reflect.Type {
 	case `BLOB`:
 		return reflect.TypeOf([]byte{})
 	case `TEXT`:
-		return reflect.TypeOf([]byte{})
+		return reflect.TypeOf(``)
 	case `DATE`:
 		return reflect.TypeOf(``)
 	case `DATETIME`:
