@@ -19,7 +19,7 @@ func (d dummyDriver) MarshalResults(_ *sql.Rows, _ http.ResponseWriter) error {
 }
 
 func (d dummyDriver) GetColumns(*sql.DB, Table) ([]string, error) {
-	return []string{`id`, `name`}, nil
+	return []string{`id`, `name`, `a`, `b`}, nil
 }
 
 func TestSelect(t *testing.T) {

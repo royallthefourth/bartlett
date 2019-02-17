@@ -12,9 +12,9 @@ import (
 // Routes generates all of the URLs and handlers for the tables specified in Bartlett.
 // Iterate this output to feed it into your web server, prefix or otherwise alter the route names,
 // and add filtering to the handler functions.
-func (b *Bartlett) Routes() (paths []string, handlers []func(http.ResponseWriter, *http.Request)) {
+func (b *Bartlett) Routes() (paths []string, handlers []http.HandlerFunc) {
 	paths = make([]string, len(b.Tables))
-	handlers = make([]func(http.ResponseWriter, *http.Request), len(b.Tables))
+	handlers = make([]http.HandlerFunc, len(b.Tables))
 	for i, t := range b.Tables {
 		columns, err := b.Driver.GetColumns(b.DB, t)
 		if err != nil {

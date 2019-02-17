@@ -126,30 +126,35 @@ func TestPostRoute(t *testing.T) {
 		DB:     db,
 		Driver: dummyDriver{},
 		Tables: []Table{
-			{columns: []string{`a`, `b`},
+			{
 				Name:     `letters`,
-				Writable: true},
+				Writable: true,
+			},
 		},
 		Users: dummyUserProvider,
 	}
 
 	_, handlers := b.Routes()
 
+	mock.MatchExpectationsInOrder(false)
 	mock.ExpectBegin()
-	mock.ExpectExec(`INSERT INTO letters`).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(`INSERT INTO letters`).
+		WithArgs(`hello`, `5723`).
+		WillReturnResult(sqlmock.NewResult(0,0))
 	mock.ExpectCommit()
 	req, err := http.NewRequest(
 		http.MethodPost,
 		`https://example.com/letters`,
 		strings.NewReader(`[{"a": "hello", "b": 5723}]`))
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	resp := httptest.NewRecorder()
 	handlers[0](resp, req)
 	if resp.Code != http.StatusOK {
 		t.Errorf(`Expected "200" but got %d for status code in %s`, resp.Code, resp.Body.String())
 	}
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
