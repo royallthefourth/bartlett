@@ -38,15 +38,15 @@ func TestPrepareInsertUserID(t *testing.T) {
 		t.Errorf(`Expected "INSERT INTO letters (a,b,userID)" but got %s`, sql)
 	}
 
-	if !reflect.DeepEqual(args[0].([]uint8), []uint8(`test`)) {
+	if !reflect.DeepEqual(args[0], `test`) {
 		t.Errorf(`Expected "test" but got %s`, args[0])
 	}
 
-	if !reflect.DeepEqual(args[1].([]uint8), []uint8(`5723`)) {
+	if !reflect.DeepEqual(args[1], `5723`) {
 		t.Errorf(`Expected 5723 but got %c`, args[1])
 	}
 
-	if !reflect.DeepEqual(args[2].(int), int(1)) {
+	if !reflect.DeepEqual(args[2], 1) {
 		t.Errorf(`Expected 1 but got %c`, args[2])
 	}
 }

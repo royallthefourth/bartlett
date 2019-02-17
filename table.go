@@ -33,7 +33,7 @@ func (t Table) prepareInsert(inputBody []byte, userID interface{}) *sqrl.InsertB
 	_ = jsonparser.ObjectEach(inputBody, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
 		if sliceContains(validCols, string(key)) {
 			query.Columns(string(key))
-			vals = append(vals, val)
+			vals = append(vals, string(val))
 		}
 		return nil
 	})
