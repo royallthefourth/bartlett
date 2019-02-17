@@ -51,7 +51,7 @@ func (driver *MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error
 		driver.tables[t.Name] = append(driver.tables[t.Name], column{name: c.Field, dataType: mysqlTypeToGo(c.Type)})
 	}
 
-	return []string{}, err
+	return columns, err
 }
 
 // MarshalResults converts from MariaDB types to Go types, then outputs JSON to the ResponseWriter.
