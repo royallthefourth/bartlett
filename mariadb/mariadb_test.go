@@ -45,7 +45,7 @@ func TestMariaDB(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = db.Exec("CREATE TABLE todo(todo_id INTEGER PRIMARY KEY AUTO_INCREMENT, txt TEXT NOT NULL);")
+	_, err = db.Exec("CREATE TABLE todo(todo_id INTEGER PRIMARY KEY AUTO_INCREMENT, txt TEXT NOT NULL DEFAULT '');")
 	if err != nil {
 		t.Error(err)
 	}

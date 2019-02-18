@@ -8,6 +8,7 @@ import (
 	"github.com/royallthefourth/bartlett"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 // MariaDB provides logic specific to MariaDB and probably other MySQL compatibles, but MariaDB is the target.
@@ -123,7 +124,7 @@ func (MariaDB) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 // Driver gives weird results for column types by default.
 // Let's pick our own types instead from https://github.com/go-sql-driver/mysql/blob/c45f530f8e7fe40f4687eaa50d0c8c5f1b66f9e0/fields.go#L16
 func mysqlTypeToGo(t string) reflect.Type {
-	switch t { // sure would like to have every branch of this converted to json by tests
+	switch strings.ToUpper(t) { // sure would like to have every branch of this converted to json by tests
 	case `BIT`:
 		return reflect.TypeOf(true)
 	case `BLOB`:
