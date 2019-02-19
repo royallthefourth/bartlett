@@ -185,6 +185,22 @@ func (b Bartlett) validateWrite(t Table, r *http.Request, body []byte) (status i
 		return status, nil, err
 	}
 
+	if !json.Valid(body) {
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`JSON data not valid`)
+		return status, userID, err
+	}
+
+	if r.Method == http.MethodPost && rune(body[0]) != '[' { // Inserts are arrays.
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`JSON data should be an array`)
+		return status, nil, err
+	} else if r.Method == http.MethodPatch && rune(body[0]) != '{' { // Updates are single value.
+		status = http.StatusBadRequest
+		err = fmt.Errorf(`JSON data should be an object`)
+		return status, nil, err
+	}
+
 	if t.UserID != `` {
 		userID, err = b.Users(r)
 		if err != nil || userID == nil {
@@ -194,18 +210,6 @@ func (b Bartlett) validateWrite(t Table, r *http.Request, body []byte) (status i
 		}
 	} else {
 		userID = 0
-	}
-
-	if !json.Valid(body) {
-		status = http.StatusBadRequest
-		err = fmt.Errorf(`JSON data not valid`)
-		return status, userID, err
-	}
-
-	if r.Method != http.MethodPatch && rune(body[0]) != '[' { // Updated are allowed to be single value; posts are not.
-		status = http.StatusBadRequest
-		err = fmt.Errorf(`JSON data should be an array`)
-		return status, userID, err
 	}
 
 	return status, userID, err

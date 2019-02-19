@@ -140,7 +140,7 @@ func TestPostRoute(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO letters`).
 		WithArgs(`hello`, `5723`).
-		WillReturnResult(sqlmock.NewResult(0,0))
+		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectCommit()
 	req, err := http.NewRequest(
 		http.MethodPost,
@@ -255,5 +255,27 @@ func TestPostForbidden(t *testing.T) {
 	handlers[0](resp, req)
 	if resp.Code != http.StatusForbidden {
 		t.Errorf(`Expected "403" but got %d for status code`, resp.Code)
+	}
+}
+
+func TestValidatePatch(t *testing.T) {
+	b := Bartlett{}
+	tbl := Table{Writable: true}
+	req := http.Request{Method: http.MethodPatch}
+	body := []byte(`[{"a":1}]`)
+	status, _, _ := b.validateWrite(tbl, &req, body)
+	if status != http.StatusBadRequest {
+		t.Errorf(`Expected "400" but got %d for status code`, status)
+	}
+}
+
+func TestValidatePost(t *testing.T) {
+	b := Bartlett{}
+	tbl := Table{Writable: true}
+	req := http.Request{Method: http.MethodPost}
+	body := []byte(`{"a":1}`)
+	status, _, _ := b.validateWrite(tbl, &req, body)
+	if status != http.StatusBadRequest {
+		t.Errorf(`Expected "400" but got %d for status code`, status)
 	}
 }
