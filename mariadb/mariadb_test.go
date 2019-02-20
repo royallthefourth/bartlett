@@ -29,6 +29,7 @@ func TestMariaDB(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer db.Exec(`DROP TABLE students;`)
 
 	_, err = db.Exec(`INSERT INTO students(age, grade) VALUES(18, 85),(20,91);`)
 	if err != nil {
@@ -39,6 +40,7 @@ func TestMariaDB(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	db.Exec(`DROP TABLE teachers;`)
 
 	_, err = db.Exec(`INSERT INTO teachers(name) VALUES('Mr. Smith'),('Ms. Key');`)
 	if err != nil {
@@ -49,6 +51,7 @@ func TestMariaDB(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	db.Exec(`DROP TABLE todo;`)
 
 	tables := []bartlett.Table{
 		{
@@ -69,9 +72,6 @@ func TestMariaDB(t *testing.T) {
 	paths, handlers := b.Routes()
 	testSimpleGetAll(t, paths, handlers)
 	testInsert(t, paths, handlers)
-	db.Exec(`DROP TABLE students;`)
-	db.Exec(`DROP TABLE teachers;`)
-	db.Exec(`DROP TABLE todo;`)
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
