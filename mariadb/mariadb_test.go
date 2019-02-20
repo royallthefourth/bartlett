@@ -40,7 +40,7 @@ func TestMariaDB(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	db.Exec(`DROP TABLE teachers;`)
+	defer db.Exec(`DROP TABLE teachers;`)
 
 	_, err = db.Exec(`INSERT INTO teachers(name) VALUES('Mr. Smith'),('Ms. Key');`)
 	if err != nil {
@@ -51,7 +51,7 @@ func TestMariaDB(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	db.Exec(`DROP TABLE todo;`)
+	defer db.Exec(`DROP TABLE todo;`)
 
 	tables := []bartlett.Table{
 		{
