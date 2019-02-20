@@ -36,6 +36,7 @@ func (driver *MariaDB) GetColumns(db *sql.DB, t bartlett.Table) ([]string, error
 		driver.tables = make(map[string][]column)
 	}
 	rows, err := db.Query(fmt.Sprintf(`SHOW COLUMNS FROM %s`, t.Name))
+	defer rows.Close()
 	if err != nil {
 		return []string{}, err
 	}
