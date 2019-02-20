@@ -2,7 +2,7 @@ package bartlett
 
 import (
 	"database/sql"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 	"net/http"
 	"strings"
 	"testing"

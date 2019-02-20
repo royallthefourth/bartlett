@@ -3,13 +3,13 @@ package bartlett
 import (
 	"errors"
 	"fmt"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (b Bartlett) buildUpdate(t Table, r *http.Request, userID interface{}, body []byte) (*sqrl.UpdateBuilder, error) {
+func (b Bartlett) buildUpdate(t Table, r *http.Request, userID interface{}, body []byte) (sqrl.UpdateBuilder, error) {
 	query := t.prepareUpdate(body, userID, sqrl.Update(t.Name))
 	query, err := updateWhere(query, t, r)
 	if err != nil {
@@ -25,7 +25,7 @@ func (b Bartlett) buildUpdate(t Table, r *http.Request, userID interface{}, body
 	return query, nil
 }
 
-func updateLimit(query *sqrl.UpdateBuilder, r *http.Request) *sqrl.UpdateBuilder {
+func updateLimit(query sqrl.UpdateBuilder, r *http.Request) sqrl.UpdateBuilder {
 	var (
 		err   error
 		limit int
@@ -43,7 +43,7 @@ func updateLimit(query *sqrl.UpdateBuilder, r *http.Request) *sqrl.UpdateBuilder
 	return query
 }
 
-func updateOrder(query *sqrl.UpdateBuilder, t Table, r *http.Request) *sqrl.UpdateBuilder {
+func updateOrder(query sqrl.UpdateBuilder, t Table, r *http.Request) sqrl.UpdateBuilder {
 	for _, col := range parseOrder(t, r) {
 		query = query.OrderBy(fmt.Sprintf(`%s %s`, col.Column, strings.ToUpper(col.Direction)))
 	}
@@ -51,7 +51,7 @@ func updateOrder(query *sqrl.UpdateBuilder, t Table, r *http.Request) *sqrl.Upda
 	return query
 }
 
-func updateWhere(query *sqrl.UpdateBuilder, t Table, r *http.Request) (*sqrl.UpdateBuilder, error) {
+func updateWhere(query sqrl.UpdateBuilder, t Table, r *http.Request) (sqrl.UpdateBuilder, error) {
 	var err error = nil
 	whereClauses := 0
 	i := 0

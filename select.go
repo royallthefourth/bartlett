@@ -2,13 +2,13 @@ package bartlett
 
 import (
 	"fmt"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (b Bartlett) buildSelect(t Table, r *http.Request) (*sqrl.SelectBuilder, error) {
+func (b Bartlett) buildSelect(t Table, r *http.Request) (sqrl.SelectBuilder, error) {
 	query := selectColumns(t, r).From(t.Name)
 	query = selectWhere(query, t, r)
 	query = selectOrder(query, t, r)
@@ -30,7 +30,7 @@ type orderSpec struct {
 	Direction string
 }
 
-func selectOrder(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.SelectBuilder {
+func selectOrder(query sqrl.SelectBuilder, t Table, r *http.Request) sqrl.SelectBuilder {
 	for _, col := range parseOrder(t, r) {
 		query = query.OrderBy(fmt.Sprintf(`%s %s`, col.Column, strings.ToUpper(col.Direction)))
 	}
@@ -64,8 +64,8 @@ func parseOrder(t Table, r *http.Request) []orderSpec {
 	return out
 }
 
-func selectColumns(t Table, r *http.Request) *sqrl.SelectBuilder {
-	var query *sqrl.SelectBuilder
+func selectColumns(t Table, r *http.Request) sqrl.SelectBuilder {
+	var query sqrl.SelectBuilder
 	columns := parseColumns(t, r)
 	if len(columns) > 0 {
 		query = sqrl.Select(columns[0])
@@ -88,7 +88,7 @@ func parseColumns(t Table, r *http.Request) []string {
 	return out
 }
 
-func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder {
+func selectLimit(query sqrl.SelectBuilder, r *http.Request) sqrl.SelectBuilder {
 	var (
 		err    error
 		limit  int
@@ -113,7 +113,7 @@ func selectLimit(query *sqrl.SelectBuilder, r *http.Request) *sqrl.SelectBuilder
 	return query
 }
 
-func selectWhere(query *sqrl.SelectBuilder, t Table, r *http.Request) *sqrl.SelectBuilder {
+func selectWhere(query sqrl.SelectBuilder, t Table, r *http.Request) sqrl.SelectBuilder {
 	i := 0
 	columns := make([]string, len(r.URL.Query()))
 	for k := range r.URL.Query() {

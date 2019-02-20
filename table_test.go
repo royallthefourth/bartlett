@@ -12,13 +12,17 @@ func TestPrepareInsert(t *testing.T) {
 		Name:     `letters`,
 		Writable: true,
 	}
-	sql, _, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "c": "disregard"}`), 1).ToSql()
+	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "c": "disregard"}`), 1).ToSql()
 	if err != nil {
 		t.Errorf(err.Error())
 	}
 
-	if !strings.Contains(sql, `INSERT INTO letters (a,b)`) {
-		t.Errorf(`Expected "INSERT INTO letters (a,b)" but got %s`, sql)
+	if !strings.Contains(sql, `INSERT INTO letters (a,b) VALUES (?,?)`) {
+		t.Errorf(`Expected "INSERT INTO letters (a,b) VALUES (?,?)" but got %s`, sql)
+	}
+
+	if args[0] != `test` {
+		t.Errorf(`Expected "test" but got %s`, args[0])
 	}
 }
 
@@ -34,8 +38,8 @@ func TestPrepareInsertUserID(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	if !strings.Contains(sql, `INSERT INTO letters (a,b,userID)`) {
-		t.Errorf(`Expected "INSERT INTO letters (a,b,userID)" but got %s`, sql)
+	if !strings.Contains(sql, `INSERT INTO letters (a,b,userID) VALUES (?,?,?)`) {
+		t.Errorf(`Expected "INSERT INTO letters (a,b,userID) VALUES (?,?,?)" but got %s`, sql)
 	}
 
 	if !reflect.DeepEqual(args[0], `test`) {
@@ -66,8 +70,8 @@ func TestPrepareInsertIDColumn(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	if !strings.Contains(sql, `INSERT INTO letters (a,b,letter_id)`) {
-		t.Errorf(`Expected "INSERT INTO letters (a,b,letter_id)" but got %s`, sql)
+	if !strings.Contains(sql, `INSERT INTO letters (a,b,letter_id) VALUES (?,?,?)`) {
+		t.Errorf(`Expected "INSERT INTO letters (a,b,letter_id) VALUES (?,?,?)" but got %s`, sql)
 	}
 
 	if !reflect.DeepEqual(args[2].(int), int(1)) {

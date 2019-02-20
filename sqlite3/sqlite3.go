@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 	"github.com/royallthefourth/bartlett"
 	"net/http"
 	"reflect"

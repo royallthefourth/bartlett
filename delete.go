@@ -3,13 +3,13 @@ package bartlett
 import (
 	"errors"
 	"fmt"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (b Bartlett) buildDelete(t Table, r *http.Request) (*sqrl.DeleteBuilder, error) {
+func (b Bartlett) buildDelete(t Table, r *http.Request) (sqrl.DeleteBuilder, error) {
 	query, err := deleteWhere(sqrl.Delete(t.Name), t, r)
 	if err != nil {
 		return query, err
@@ -28,7 +28,7 @@ func (b Bartlett) buildDelete(t Table, r *http.Request) (*sqrl.DeleteBuilder, er
 	return query, nil
 }
 
-func deleteLimit(query *sqrl.DeleteBuilder, r *http.Request) *sqrl.DeleteBuilder {
+func deleteLimit(query sqrl.DeleteBuilder, r *http.Request) sqrl.DeleteBuilder {
 	var (
 		err   error
 		limit int
@@ -46,7 +46,7 @@ func deleteLimit(query *sqrl.DeleteBuilder, r *http.Request) *sqrl.DeleteBuilder
 	return query
 }
 
-func deleteOrder(query *sqrl.DeleteBuilder, t Table, r *http.Request) *sqrl.DeleteBuilder {
+func deleteOrder(query sqrl.DeleteBuilder, t Table, r *http.Request) sqrl.DeleteBuilder {
 	for _, col := range parseOrder(t, r) {
 		query = query.OrderBy(fmt.Sprintf(`%s %s`, col.Column, strings.ToUpper(col.Direction)))
 	}
@@ -54,7 +54,7 @@ func deleteOrder(query *sqrl.DeleteBuilder, t Table, r *http.Request) *sqrl.Dele
 	return query
 }
 
-func deleteWhere(query *sqrl.DeleteBuilder, t Table, r *http.Request) (*sqrl.DeleteBuilder, error) {
+func deleteWhere(query sqrl.DeleteBuilder, t Table, r *http.Request) (sqrl.DeleteBuilder, error) {
 	var err error = nil
 	whereClauses := 0
 	i := 0

@@ -2,7 +2,7 @@ package bartlett
 
 import (
 	"database/sql"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 	"net/http"
 	"strings"
 	"testing"
@@ -96,7 +96,7 @@ func TestDeleteWhere(t *testing.T) {
 		http.MethodDelete,
 		"http://example.com/students?grade=eq.90&student_id=not.eq.25&student_id=in.(10,20,30)&student_id=not.in.(11,12)&grade=like.a*c",
 		nil)
-	query, _ := deleteWhere(sqrl.Delete().From(`students`), schema, req)
+	query, _ := deleteWhere(sqrl.Delete(`students`), schema, req)
 	rawSQL, _, _ := query.ToSql()
 	if !strings.Contains(rawSQL, `student_id != ?`) || !strings.Contains(rawSQL, `grade = ?`) {
 		t.Errorf(`Expected "grade = ? AND student_id != ?" but got %s`, rawSQL)

@@ -2,7 +2,7 @@ package bartlett
 
 import (
 	"github.com/buger/jsonparser"
-	"github.com/elgris/sqrl"
+	sqrl "github.com/Masterminds/squirrel"
 )
 
 // A Table represents a table in the database.
@@ -26,35 +26,35 @@ type IDSpec struct {
 	Generator func() interface{}
 }
 
-func (t Table) prepareInsert(inputBody []byte, userID interface{}) *sqrl.InsertBuilder {
+func (t Table) prepareInsert(inputBody []byte, userID interface{}) sqrl.InsertBuilder {
 	query := sqrl.Insert(t.Name)
 	validCols := t.validWriteColumns()
 	var vals []interface{}
 	_ = jsonparser.ObjectEach(inputBody, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
 		if sliceContains(validCols, string(key)) {
-			query.Columns(string(key))
+			query = query.Columns(string(key))
 			vals = append(vals, string(val))
 		}
 		return nil
 	})
 
 	if t.IDColumn.Name != `` {
-		query.Columns(t.IDColumn.Name)
+		query = query.Columns(t.IDColumn.Name)
 		vals = append(vals, t.IDColumn.Generator())
 	}
 	if len(t.UserID) > 0 {
-		query.Columns(t.UserID)
+		query = query.Columns(t.UserID)
 		vals = append(vals, userID)
 	}
 
 	return query.Values(vals...)
 }
 
-func (t Table) prepareUpdate(inputBody []byte, userID interface{}, query *sqrl.UpdateBuilder) *sqrl.UpdateBuilder {
+func (t Table) prepareUpdate(inputBody []byte, userID interface{}, query sqrl.UpdateBuilder) sqrl.UpdateBuilder {
 	validCols := t.validWriteColumns()
 	_ = jsonparser.ObjectEach(inputBody, func(key []byte, val []byte, dataType jsonparser.ValueType, offset int) error {
 		if sliceContains(validCols, string(key)) {
-			query.Set(string(key), val)
+			query = query.Set(string(key), val)
 		}
 		return nil
 	})
