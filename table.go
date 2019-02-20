@@ -1,8 +1,8 @@
 package bartlett
 
 import (
-	"github.com/buger/jsonparser"
 	sqrl "github.com/Masterminds/squirrel"
+	"github.com/buger/jsonparser"
 )
 
 // A Table represents a table in the database.
