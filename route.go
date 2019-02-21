@@ -64,13 +64,12 @@ func (b Bartlett) handleDelete(t Table, w http.ResponseWriter, r *http.Request) 
 	}
 
 	rows, err := query.RunWith(b.DB).Query()
-	defer rows.Close()
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
+	defer rows.Close()
 
 	err = b.Driver.MarshalResults(rows, w)
 	if err != nil {
@@ -89,13 +88,12 @@ func (b Bartlett) handleGet(t Table, w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := query.RunWith(b.DB).Query()
-	defer rows.Close()
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return
 	}
+	defer rows.Close()
 
 	err = b.Driver.MarshalResults(rows, w)
 	if err != nil {
