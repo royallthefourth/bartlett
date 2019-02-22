@@ -1,7 +1,9 @@
 package bartlett
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"net/http"
 	"net/http/httptest"
@@ -188,6 +190,52 @@ func TestPostReadOnly(t *testing.T) {
 	handlers[0](resp, req)
 	if resp.Code != http.StatusMethodNotAllowed {
 		t.Errorf(`Expected "405" but got %d for status code`, resp.Code)
+	}
+}
+
+func TestPostDbError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	b := Bartlett{
+		DB:     db,
+		Driver: dummyDriver{},
+		Tables: []Table{
+			{Name: `letters`, Writable: true},
+		},
+		Users: dummyUserProvider,
+	}
+
+	_, handlers := b.Routes()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`INSERT INTO letters`).
+		WithArgs(`hello`).
+		WillReturnError(fmt.Errorf(`sorry about that error`))
+	mock.ExpectCommit()
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		`https://example.com/letters`,
+		strings.NewReader(`[{"a": "hello"}]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+	handlers[0](resp, req)
+	if resp.Code != http.StatusBadRequest {
+		t.Errorf(`Expected "400" but got %d for status code`, resp.Code)
+		t.Log(resp.Body.String())
+	}
+
+	if !json.Valid(resp.Body.Bytes()) {
+		t.Errorf(`Expected valid JSON response but got %s`, resp.Body.String())
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 

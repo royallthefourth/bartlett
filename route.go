@@ -130,6 +130,11 @@ func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+type postResult struct {
+	Errors  []error `json:"errors"`
+	Inserts uint    `json:"inserts"`
+}
+
 func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	status, userID, err := b.validateWrite(t, r, body)
@@ -146,21 +151,23 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var n uint
+	result := postResult{
+		Errors:  make([]error, 0),
+		Inserts: 0,
+	}
 	_, err = jsonparser.ArrayEach(body, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
 		query := t.prepareInsert(row, userID)
 		_, err = query.RunWith(tx).Exec()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+			result.Errors = append(result.Errors, err)
 			return
 		}
-		n++
+		result.Inserts++
 	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s in %s"}`, err.Error(), body)))
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s while parsing input"}`, err.Error())))
 		return
 	}
 
@@ -171,7 +178,17 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = w.Write([]byte(fmt.Sprintf(`{"inserts": %d}`, n)))
+	out, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return
+	}
+
+	if result.Inserts == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	_, _ = w.Write(out)
 }
 
 func (b Bartlett) validateWrite(t Table, r *http.Request, body []byte) (status int, userID interface{}, err error) {
