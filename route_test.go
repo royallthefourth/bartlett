@@ -227,6 +227,7 @@ func TestPostDbError(t *testing.T) {
 	handlers[0](resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Errorf(`Expected "400" but got %d for status code`, resp.Code)
+		t.Log(resp.Body.String())
 	}
 
 	if !json.Valid(resp.Body.Bytes()) {
