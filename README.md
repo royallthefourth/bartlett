@@ -62,6 +62,8 @@ func main() {
 }
 ```
 
+See the [todo list demo application](https://github.com/royallthefourth/bartlett-todo) for a bigger example.
+
 ### Querying
 
 #### `SELECT`
