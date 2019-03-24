@@ -9,12 +9,16 @@ import (
 	"net/http"
 )
 
-// Routes generates all of the URLs and handlers for the tables specified in Bartlett.
+type Route struct {
+	Handler http.HandlerFunc
+	Path string
+}
+
+// Routes generates all of the paths and handlers for the tables specified in Bartlett.
 // Iterate this output to feed it into your web server, prefix or otherwise alter the route names,
 // and add filtering to the handler functions.
-func (b *Bartlett) Routes() (paths []string, handlers []http.HandlerFunc) {
-	paths = make([]string, len(b.Tables))
-	handlers = make([]http.HandlerFunc, len(b.Tables))
+func (b *Bartlett) Routes() []Route {
+	routes := make([]Route, len(b.Tables))
 	for i, t := range b.Tables {
 		columns, err := b.Driver.GetColumns(b.DB, t)
 		if err != nil {
@@ -22,11 +26,13 @@ func (b *Bartlett) Routes() (paths []string, handlers []http.HandlerFunc) {
 		} else {
 			t.columns = columns
 		}
-		paths[i] = fmt.Sprintf(`/%s`, t.Name)
-		handlers[i] = b.handleRoute(t)
+		routes[i] = Route{
+			Handler: b.handleRoute(t),
+			Path: fmt.Sprintf(`/%s`, t.Name),
+		}
 	}
 
-	return paths, handlers
+	return routes
 }
 
 func (b Bartlett) handleRoute(t Table) func(http.ResponseWriter, *http.Request) {

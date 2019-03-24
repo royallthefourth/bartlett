@@ -72,16 +72,16 @@ type teacher struct {
 }
 
 func testGetColumn(t *testing.T, b bartlett.Bartlett) {
-	paths, handlers := b.Routes()
+	routes := b.Routes()
 	req, err := http.NewRequest(`GET`, `https://example.com/teachers?select=teacher_id`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
 
-	for i, path := range paths {
-		if path == `/teachers` {
-			handlers[i](resp, req) // Fill the response
+	for _, route := range routes {
+		if route.Path == `/teachers` {
+			route.Handler(resp, req) // Fill the response
 
 			if !json.Valid(resp.Body.Bytes()) {
 				t.Fatalf(`Expected valid JSON response but got %s`, resp.Body.String())
@@ -95,16 +95,16 @@ func testGetColumn(t *testing.T, b bartlett.Bartlett) {
 }
 
 func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
-	paths, handlers := b.Routes()
+	routes := b.Routes()
 	req, err := http.NewRequest(`GET`, `https://example.com/teachers`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
 
-	for i, path := range paths {
-		if path == `/teachers` {
-			handlers[i](resp, req) // Fill the response
+	for _, route := range routes {
+		if route.Path == `/teachers` {
+			route.Handler(resp, req) // Fill the response
 
 			if !json.Valid(resp.Body.Bytes()) {
 				t.Errorf(`Expected valid JSON response but got %s`, resp.Body.String())
@@ -125,16 +125,16 @@ func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
 }
 
 func testUserGetAll(t *testing.T, b bartlett.Bartlett) {
-	paths, handlers := b.Routes()
+	routes := b.Routes()
 	req, err := http.NewRequest(`GET`, `https://example.com/students`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
 
-	for i, path := range paths {
-		if path == `/students` {
-			handlers[i](resp, req) // Fill the response
+	for _, route := range routes {
+		if route.Path == `/students` {
+			route.Handler(resp, req) // Fill the response
 
 			if resp.Code != http.StatusOK {
 				t.Fatalf(`Expected "200" but got %d for status code`, resp.Code)

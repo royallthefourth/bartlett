@@ -26,9 +26,9 @@ func TestGetRoute(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	routes, handlers := b.Routes()
-	if routes[0] != `/students` {
-		t.Errorf(`Expected route "students" but got %s instead`, routes[0])
+	routes := b.Routes()
+	if routes[0].Path != `/students` {
+		t.Errorf(`Expected route "students" but got %s instead`, routes[0].Path)
 	}
 
 	mock.ExpectQuery(`SELECT \* FROM students`).WillReturnRows(sqlmock.NewRows([]string{`name`, `age`}))
@@ -37,7 +37,7 @@ func TestGetRoute(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusOK {
 		t.Fatalf(`Expected "200" but got %d for status code`, resp.Code)
 	}
@@ -64,14 +64,14 @@ func TestDeleteRoute(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 
 	req, err := http.NewRequest(http.MethodDelete, `https://example.com/students`, strings.NewReader(``))
 	if err != nil {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Fatalf(`Expected "400" but got %d for status code`, resp.Code)
 	}
@@ -98,7 +98,7 @@ func TestPatchRoute(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 
 	mock.ExpectExec(`UPDATE students SET name = \? WHERE id = \?`).
 		WithArgs([]uint8(`todd`), `15`).
@@ -109,7 +109,7 @@ func TestPatchRoute(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusOK {
 		t.Errorf(`Expected "200" but got %d for status code with body %s`, resp.Code, resp.Body.String())
 	}
@@ -136,7 +136,7 @@ func TestPostRoute(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 
 	mock.MatchExpectationsInOrder(false)
 	mock.ExpectBegin()
@@ -152,7 +152,7 @@ func TestPostRoute(t *testing.T) {
 		t.Error(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusOK {
 		t.Errorf(`Expected "200" but got %d for status code in %s`, resp.Code, resp.Body.String())
 	}
@@ -177,7 +177,7 @@ func TestPostReadOnly(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 
 	req, err := http.NewRequest(
 		http.MethodPost,
@@ -187,7 +187,7 @@ func TestPostReadOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusMethodNotAllowed {
 		t.Errorf(`Expected "405" but got %d for status code`, resp.Code)
 	}
@@ -208,7 +208,7 @@ func TestPostDbError(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO letters`).
@@ -224,7 +224,7 @@ func TestPostDbError(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Errorf(`Expected "400" but got %d for status code`, resp.Code)
 		t.Log(resp.Body.String())
@@ -254,7 +254,7 @@ func TestPostInvalid(t *testing.T) {
 		Users: dummyUserProvider,
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 
 	req, err := http.NewRequest(
 		http.MethodPost,
@@ -264,7 +264,7 @@ func TestPostInvalid(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Errorf(`Expected "400" but got %d for status code`, resp.Code)
 	}
@@ -287,7 +287,7 @@ func TestPostForbidden(t *testing.T) {
 		},
 	}
 
-	_, handlers := b.Routes()
+	routes := b.Routes()
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO letters`).WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectCommit()
@@ -300,7 +300,7 @@ func TestPostForbidden(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp := httptest.NewRecorder()
-	handlers[0](resp, req)
+	routes[0].Handler(resp, req)
 	if resp.Code != http.StatusForbidden {
 		t.Errorf(`Expected "403" but got %d for status code`, resp.Code)
 	}
