@@ -69,9 +69,9 @@ func TestMariaDB(t *testing.T) {
 
 	b := bartlett.Bartlett{db, &MariaDB{}, tables, dummyUserProvider}
 
-	paths, handlers := b.Routes()
-	testSimpleGetAll(t, paths, handlers)
-	testInsert(t, paths, handlers)
+	routes := b.Routes()
+	testSimpleGetAll(t, routes)
+	testInsert(t, routes)
 }
 
 func dummyUserProvider(_ *http.Request) (interface{}, error) {
@@ -84,17 +84,17 @@ type student struct {
 	StudentID int `json:"student_id"`
 }
 
-func testInsert(t *testing.T, paths []string, handlers []http.HandlerFunc) {
+func testInsert(t *testing.T, routes []bartlett.Route) {
 	req, err := http.NewRequest(`POST`, `https://example.com/todo`, strings.NewReader(`[{"txt":"hello"}]`))
 	if err != nil {
 		t.Error(err)
 	}
 	resp := httptest.NewRecorder()
-	if paths[2] != `/todo` {
-		t.Errorf(`Expected "todo" but got %s for path`, paths[0])
+	if routes[2].Path != `/todo` {
+		t.Errorf(`Expected "todo" but got %s for path`, routes[2].Path)
 	}
 
-	handlers[2](resp, req)
+	routes[2].Handler(resp, req)
 
 	if resp.Code != http.StatusOK {
 		t.Errorf(`Expected "200" but got %d for status code`, resp.Code)
@@ -110,7 +110,7 @@ func testInsert(t *testing.T, paths []string, handlers []http.HandlerFunc) {
 		t.Error(err)
 	}
 	resp = httptest.NewRecorder()
-	handlers[2](resp, req)
+	routes[2].Handler(resp, req)
 
 	if !strings.Contains(resp.Body.String(), `hello`) {
 		t.Errorf(`Expected "hello" in response body but got %s`, resp.Body.String())
@@ -125,17 +125,17 @@ func testInsert(t *testing.T, paths []string, handlers []http.HandlerFunc) {
 	}
 }
 
-func testSimpleGetAll(t *testing.T, paths []string, handlers []http.HandlerFunc) {
+func testSimpleGetAll(t *testing.T, routes []bartlett.Route) {
 	req, err := http.NewRequest(`GET`, `https://example.com/students`, strings.NewReader(``))
 	if err != nil {
 		t.Error(err)
 	}
 	resp := httptest.NewRecorder()
-	if paths[0] != `/students` {
-		t.Errorf(`Expected "students" but got %s for path`, paths[0])
+	if routes[0].Path != `/students` {
+		t.Errorf(`Expected "students" but got %s for path`, routes[0].Path)
 	}
 
-	handlers[0](resp, req) // Fill the response
+	routes[0].Handler(resp, req) // Fill the response
 
 	if resp.Code != http.StatusOK {
 		t.Errorf(`Expected "200" but got %d for status code`, resp.Code)
