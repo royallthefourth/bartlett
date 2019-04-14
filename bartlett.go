@@ -20,3 +20,24 @@ type Bartlett struct {
 // A ResultMarshaler interprets a database result set, selects appropriate Go types, and writes JSON to the output stream.
 // This is necessary because all of the databases have different types and their drivers respond to ScanType in different ways.
 type ResultMarshaler func(rows *sql.Rows, w http.ResponseWriter) error
+
+func (b *Bartlett) ProbeTables(writable bool) *Bartlett {
+	tables := b.Driver.ProbeTables(b.DB)
+	for _, tbl := range tables {
+		if !b.hasTable(tbl.Name){
+			tbl.Writable = writable
+			b.Tables = append(b.Tables, tbl)
+		}
+	}
+
+	return b
+}
+
+func (b *Bartlett) hasTable(name string) bool {
+	for _, tbl := range b.Tables {
+		if tbl.Name == name {
+			return true
+		}
+	}
+	return false
+}
