@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/royallthefourth/bartlett"
+	"log"
 	"net/http"
 	"reflect"
 	"strings"
@@ -120,6 +121,27 @@ func (MariaDB) MarshalResults(rows *sql.Rows, w http.ResponseWriter) error {
 	}
 
 	return err
+}
+
+func (driver *MariaDB) ProbeTables(db *sql.DB) []bartlett.Table {
+	rows, err := db.Query(`SELECT table_name FROM information_schema.tables WHERE table_schema = database()`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	tables := make([]bartlett.Table, 0)
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Fatal(err)
+		}
+
+		tables = append(tables, bartlett.Table{Name: name})
+	}
+
+	return tables
 }
 
 // Driver gives weird results for column types by default.
