@@ -8,7 +8,7 @@ import (
 func TestBartlett_ProbeTables(t *testing.T) {
 	tables := []Table{
 		{
-			Name: `students`,
+			Name:     `students`,
 			Writable: true,
 		},
 	}

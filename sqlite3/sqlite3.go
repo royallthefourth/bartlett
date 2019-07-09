@@ -7,6 +7,7 @@ import (
 	"fmt"
 	sqrl "github.com/Masterminds/squirrel"
 	"github.com/royallthefourth/bartlett"
+	"log"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -118,6 +119,27 @@ func (driver SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) erro
 	}
 
 	return err
+}
+
+func (driver *SQLite3) ProbeTables(db *sql.DB) []bartlett.Table {
+	rows, err := db.Query(`SELECT name FROM sqlite_master WHERE type='table'`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	tables := make([]bartlett.Table, 0)
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Fatal(err)
+		}
+
+		tables = append(tables, bartlett.Table{Name: name})
+	}
+
+	return tables
 }
 
 func dbTypeToGoType(dbType string) reflect.Type {

@@ -20,7 +20,7 @@ type Bartlett struct {
 func (b *Bartlett) ProbeTables(writable bool) *Bartlett {
 	tables := b.Driver.ProbeTables(b.DB)
 	for _, tbl := range tables {
-		if !b.hasTable(tbl.Name){
+		if !b.hasTable(tbl.Name) {
 			tbl.Writable = writable
 			b.Tables = append(b.Tables, tbl)
 		}

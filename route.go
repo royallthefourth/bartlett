@@ -11,7 +11,7 @@ import (
 
 type Route struct {
 	Handler http.HandlerFunc
-	Path string
+	Path    string
 }
 
 // Routes generates all of the paths and handlers for the tables specified in Bartlett.
@@ -28,7 +28,7 @@ func (b *Bartlett) Routes() []Route {
 		}
 		routes[i] = Route{
 			Handler: b.handleRoute(t),
-			Path: fmt.Sprintf(`/%s`, t.Name),
+			Path:    fmt.Sprintf(`/%s`, t.Name),
 		}
 	}
 
