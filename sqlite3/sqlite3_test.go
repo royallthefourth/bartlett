@@ -49,6 +49,20 @@ func TestSQLite3(t *testing.T) {
 		},
 	}
 
+	probedTables := (&SQLite3{}).ProbeTables(db)
+	foundTables := make(map[string]bool)
+	for _, table := range probedTables {
+		foundTables[table.Name] = true
+	}
+
+	if _, found := foundTables[`students`]; !found {
+		t.Error(`Table "students" not found`)
+	}
+
+	if _, found := foundTables[`teachers`]; !found {
+		t.Error(`Table "teachers" not found`)
+	}
+
 	b := bartlett.Bartlett{db, &SQLite3{}, tables, dummyUserProvider}
 
 	testSimpleGetAll(t, b)

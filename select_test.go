@@ -22,6 +22,17 @@ func (d dummyDriver) GetColumns(*sql.DB, Table) ([]string, error) {
 	return []string{`id`, `name`, `a`, `b`}, nil
 }
 
+func (d dummyDriver) ProbeTables(db *sql.DB) []Table {
+	return []Table{
+		{
+			Name: `students`,
+		},
+		{
+			Name: `teachers`,
+		},
+	}
+}
+
 func TestSelect(t *testing.T) {
 	table := Table{
 		Name:   `students_user`,
