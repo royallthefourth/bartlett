@@ -64,6 +64,21 @@ func main() {
 
 See the [todo list demo application](https://github.com/royallthefourth/bartlett-todo) for a bigger example.
 
+### Choosing Tables
+
+You may manually select tables to put into your API by providing a slice of `bartlett.Table` when you create your
+`Bartlett` struct.
+As a quick alternative, you may also invoke the `Bartlett.probeTables()` method to populate the internal table list
+automatically:
+
+```go
+b := bartlett.Bartlett{DB: db, Driver: &mariadb.MariaDB{}, Users: dummyUserProvider}
+b.ProbeTables(false)
+```
+
+`ProbeTables` accepts one argument to decide whether the probed tables should be writable or not.
+This should almost always be set to `false`!
+
 ### Querying
 
 #### `SELECT`
