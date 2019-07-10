@@ -1,0 +1,11 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - run: go test -coverprofile=coverage-unit.txt -v $(go list ./... | grep -v mariadb)
+      - run: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn travis@/bartlett
+      - run: grep -v "mode:" coverage-mariadb.txt | cat coverage-unit.txt - > coverage.txt
+      - run: bash <(curl -s https://codecov.io/bash)
