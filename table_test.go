@@ -12,7 +12,7 @@ func TestPrepareInsert(t *testing.T) {
 		Name:     `letters`,
 		Writable: true,
 	}
-	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "c": "disregard"}`), 1).ToSql()
+	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "c": "disregard"}`), 1, nil).ToSql()
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -33,7 +33,7 @@ func TestPrepareInsertUserID(t *testing.T) {
 		Writable: true,
 		UserID:   `userID`,
 	}
-	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "userID": "disregard"}`), 1).ToSql()
+	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "userID": "disregard"}`), 1, nil).ToSql()
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -65,7 +65,7 @@ func TestPrepareInsertIDColumn(t *testing.T) {
 		Name:     `letters`,
 		Writable: true,
 	}
-	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "letter_id": "disregard"}`), 1).ToSql()
+	sql, args, err := tbl.prepareInsert([]byte(`{"a": "test", "b": 5723, "letter_id": "disregard"}`), 1, 1).ToSql()
 	if err != nil {
 		t.Errorf(err.Error())
 	}
