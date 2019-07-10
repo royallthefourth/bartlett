@@ -4,11 +4,11 @@ jobs:
     docker:
       - image: circleci/golang:1.12
       - image: circleci/mariadb:10.4.6-bionic
-      environment:
-        MYSQL_ROOT_PASSWORD: rootpw
-        MYSQL_DATABASE: bartlett
-        MYSQL_USER: user
-        MYSQL_PASSWORD: passw0rd
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: bartlett
+          MYSQL_USER: user
+          MYSQL_PASSWORD: passw0rd
     steps:
       - checkout
       - run:
@@ -26,6 +26,6 @@ jobs:
           command: go test -coverprofile=coverage-unit.txt -v $(go list ./... | grep -v mariadb)
       - run:
           name: MariaDB tests
-          command: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn user:passw0rd@/bartlett
+          command: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn user:passw0rd@127.0.0.1/bartlett
       - run: grep -v "mode:" coverage-mariadb.txt | cat coverage-unit.txt - > coverage.txt
       - run: bash <(curl -s https://codecov.io/bash)
