@@ -26,6 +26,6 @@ jobs:
           command: go test -coverprofile=coverage-unit.txt -v $(go list ./... | grep -v mariadb)
       - run:
           name: MariaDB tests
-          command: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn user:passw0rd@tcp(127.0.0.1:3306)/bartlett
+          command: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn "user:passw0rd@tcp(127.0.0.1:3306)/bartlett"
       - run: grep -v "mode:" coverage-mariadb.txt | cat coverage-unit.txt - > coverage.txt
       - run: bash <(curl -s https://codecov.io/bash)
