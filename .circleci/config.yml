@@ -3,9 +3,29 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.12
+      - image: circleci/mariadb:10.4.6-bionic
+      environment:
+        MYSQL_ROOT_PASSWORD: rootpw
+        MYSQL_DATABASE: bartlett
+        MYSQL_USER: user
+        MYSQL_PASSWORD: passw0rd
     steps:
       - checkout
-      - run: go test -coverprofile=coverage-unit.txt -v $(go list ./... | grep -v mariadb)
-      - run: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn travis@/bartlett
+      - run:
+          name: Waiting for MySQL to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - run:
+          name: Unit tests
+          command: go test -coverprofile=coverage-unit.txt -v $(go list ./... | grep -v mariadb)
+      - run:
+          name: MariaDB tests
+          command: go test -coverprofile=coverage-mariadb.txt -v ./mariadb -dsn user:passw0rd@/bartlett
       - run: grep -v "mode:" coverage-mariadb.txt | cat coverage-unit.txt - > coverage.txt
       - run: bash <(curl -s https://codecov.io/bash)
