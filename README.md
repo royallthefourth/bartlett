@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/royallthefourth/bartlett?status.svg)](https://godoc.org/github.com/royallthefourth/bartlett)
 [![Go Report Card](https://goreportcard.com/badge/github.com/royallthefourth/bartlett)](https://goreportcard.com/report/github.com/royallthefourth/bartlett)
-[![Build Status](https://travis-ci.org/royallthefourth/bartlett.svg?branch=master)](https://travis-ci.org/royallthefourth/bartlett)
+[![CircleCI](https://circleci.com/gh/royallthefourth/bartlett.svg?style=svg)](https://circleci.com/gh/royallthefourth/bartlett)
 [![codecov](https://codecov.io/gh/royallthefourth/bartlett/branch/master/graph/badge.svg)](https://codecov.io/gh/royallthefourth/bartlett)
 
 *Bartlett* is a library that automatically generates a CRUD API for your Go web application.
