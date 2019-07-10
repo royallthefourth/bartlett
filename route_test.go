@@ -323,7 +323,7 @@ func TestValidatePost(t *testing.T) {
 	req := http.Request{Method: http.MethodPost}
 	body := []byte(`{"a":1}`)
 	status, _, _ := b.validateWrite(tbl, &req, body)
-	if status != http.StatusBadRequest {
-		t.Errorf(`Expected "400" but got %d for status code`, status)
+	if status != http.StatusOK {
+		t.Errorf(`Expected "200" but got %d for status code`, status)
 	}
 }

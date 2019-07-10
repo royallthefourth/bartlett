@@ -137,8 +137,8 @@ func (b Bartlett) handlePatch(t Table, w http.ResponseWriter, r *http.Request) {
 }
 
 type postResult struct {
-	Errors  []error `json:"errors"`
-	Inserts uint    `json:"inserts"`
+	Errors  []error       `json:"errors"`
+	Inserts []interface{} `json:"inserts"`
 }
 
 func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
@@ -159,16 +159,34 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 
 	result := postResult{
 		Errors:  make([]error, 0),
-		Inserts: 0,
+		Inserts: make([]interface{}, 0),
 	}
+
+	if rune(body[0]) != '[' {
+		body = append([]byte{'['}, append(body, ']')...)
+	}
+
 	_, err = jsonparser.ArrayEach(body, func(row []byte, dataType jsonparser.ValueType, offset int, err error) {
-		query := t.prepareInsert(row, userID)
-		_, err = query.RunWith(tx).Exec()
+		rowID := interface{}(nil)
+		if t.IDColumn.Name != `` {
+			rowID = t.IDColumn.Generator()
+		}
+		query := t.prepareInsert(row, userID, rowID)
+		res, err := query.RunWith(tx).Exec()
 		if err != nil {
 			result.Errors = append(result.Errors, err)
 			return
 		}
-		result.Inserts++
+
+		if rowID == nil {
+			rowID, err = res.LastInsertId()
+			if err != nil {
+				result.Errors = append(result.Errors, err)
+				return
+			}
+		}
+
+		result.Inserts = append(result.Inserts, rowID)
 	})
 
 	if err != nil {
@@ -191,7 +209,7 @@ func (b Bartlett) handlePost(t Table, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result.Inserts == 0 {
+	if len(result.Inserts) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	_, _ = w.Write(out)
@@ -212,11 +230,7 @@ func (b Bartlett) validateWrite(t Table, r *http.Request, body []byte) (status i
 		return status, userID, err
 	}
 
-	if r.Method == http.MethodPost && rune(body[0]) != '[' { // Inserts are arrays.
-		status = http.StatusBadRequest
-		err = fmt.Errorf(`JSON data should be an array`)
-		return status, nil, err
-	} else if r.Method == http.MethodPatch && rune(body[0]) != '{' { // Updates are single value.
+	if r.Method == http.MethodPatch && rune(body[0]) != '{' { // Updates are single value.
 		status = http.StatusBadRequest
 		err = fmt.Errorf(`JSON data should be an object`)
 		return status, nil, err
@@ -226,7 +240,7 @@ func (b Bartlett) validateWrite(t Table, r *http.Request, body []byte) (status i
 		userID, err = b.Users(r)
 		if err != nil || userID == nil {
 			status = http.StatusForbidden
-			err = fmt.Errorf(`failed to generate userID: %s`, err.Error())
+			err = fmt.Errorf(`failed to generate userID: %v`, err)
 			return status, nil, err
 		}
 	} else {

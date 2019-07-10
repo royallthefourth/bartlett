@@ -26,7 +26,7 @@ type IDSpec struct {
 	Generator func() interface{}
 }
 
-func (t Table) prepareInsert(inputBody []byte, userID interface{}) sqrl.InsertBuilder {
+func (t Table) prepareInsert(inputBody []byte, userID, rowID interface{}) sqrl.InsertBuilder {
 	query := sqrl.Insert(t.Name)
 	validCols := t.validWriteColumns()
 	var vals []interface{}
@@ -38,9 +38,9 @@ func (t Table) prepareInsert(inputBody []byte, userID interface{}) sqrl.InsertBu
 		return nil
 	})
 
-	if t.IDColumn.Name != `` {
+	if rowID != nil {
 		query = query.Columns(t.IDColumn.Name)
-		vals = append(vals, t.IDColumn.Generator())
+		vals = append(vals, rowID)
 	}
 	if len(t.UserID) > 0 {
 		query = query.Columns(t.UserID)
