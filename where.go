@@ -3,8 +3,44 @@ package bartlett
 import (
 	"encoding/csv"
 	"fmt"
+	"net/http"
 	"strings"
 )
+
+type whereCond struct {
+	Column    string // necessary due to the way Squirrel handles IN
+	Condition string
+	Value     string
+}
+
+func buildConds(t Table, r *http.Request) []whereCond {
+	i := 0
+	columns := make([]string, len(r.URL.Query()))
+	for k := range r.URL.Query() {
+		columns[i] = k
+		i++
+	}
+	columns = t.validReadColumns(columns)
+	conds := make([]whereCond, 0)
+
+	for column, values := range r.URL.Query() {
+		if sliceContains(columns, column) {
+			for _, rawCond := range values {
+				parsedCond, val := parseWhereCond(rawCond)
+				var cond string
+				if parsedCond == `in` || parsedCond == `not.in` {
+					conds = append(conds, whereCond{column, parsedCond, val})
+				} else {
+					cond = urlToWhereCond(column, parsedCond)
+					val := rectifyArg(cond, val)
+					conds = append(conds, whereCond{column, cond, val})
+				}
+			}
+		}
+	}
+
+	return conds
+}
 
 func parseSimpleWhereCond(rawCond string) (cond, val string) {
 	parts := strings.Split(rawCond, `.`)
@@ -18,11 +54,19 @@ func parseSimpleWhereCond(rawCond string) (cond, val string) {
 	return cond, val
 }
 
-func rectifyArg(cond, val string) (string, string) {
+func parseWhereCond(rawCond string) (cond, val string) {
+	if rawCond[0:2] == `or` {
+		return "", ""
+	} else {
+		return parseSimpleWhereCond(rawCond)
+	}
+}
+
+func rectifyArg(cond, val string) string {
 	if strings.Contains(cond, `LIKE ?`) {
 		val = strings.Replace(val, `*`, `%`, -1)
 	}
-	return cond, val
+	return val
 }
 
 func urlToWhereCond(column, condition string) string {
