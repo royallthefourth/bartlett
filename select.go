@@ -114,19 +114,15 @@ func selectLimit(query sqrl.SelectBuilder, r *http.Request) sqrl.SelectBuilder {
 }
 
 func selectWhere(query sqrl.SelectBuilder, t Table, r *http.Request) sqrl.SelectBuilder {
-	i := 0
-	columns := make([]string, len(r.URL.Query()))
-	for k := range r.URL.Query() {
-		columns[i] = k
-		i++
-	}
-	columns = t.validReadColumns(columns)
-
 	for _, cond := range buildConds(t, r) {
 		if cond.Condition == `not.in` {
 			query = query.Where(sqrl.NotEq{cond.Column: whereIn(cond.Value)})
 		} else if cond.Condition == `in` {
 			query = query.Where(sqrl.Eq{cond.Column: whereIn(cond.Value)})
+		} else if cond.Condition == `or` {
+			query = query.Where(parseOr(cond))
+			//} else if cond.Condition == `and` {
+
 		} else {
 			query = query.Where(cond.Condition, cond.Value)
 		}

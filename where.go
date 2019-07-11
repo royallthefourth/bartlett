@@ -3,6 +3,7 @@ package bartlett
 import (
 	"encoding/csv"
 	"fmt"
+	sqrl "github.com/Masterminds/squirrel"
 	"net/http"
 	"strings"
 )
@@ -42,6 +43,10 @@ func buildConds(t Table, r *http.Request) []whereCond {
 	return conds
 }
 
+func parseOr(cond whereCond) sqrl.Or {
+	// TODO split cond.Value on commas that are not between parens
+}
+
 func parseSimpleWhereCond(rawCond string) (cond, val string) {
 	parts := strings.Split(rawCond, `.`)
 	if parts[0] == `not` {
@@ -56,7 +61,9 @@ func parseSimpleWhereCond(rawCond string) (cond, val string) {
 
 func parseWhereCond(rawCond string) (cond, val string) {
 	if rawCond[0:2] == `or` {
-		return "", ""
+		return `or`, val
+	} else if rawCond[0:3] == `and` {
+		return `and`, val
 	} else {
 		return parseSimpleWhereCond(rawCond)
 	}

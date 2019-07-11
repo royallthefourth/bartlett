@@ -53,13 +53,6 @@ func updateOrder(query sqrl.UpdateBuilder, t Table, r *http.Request) sqrl.Update
 
 func updateWhere(query sqrl.UpdateBuilder, t Table, r *http.Request) (sqrl.UpdateBuilder, error) {
 	whereClauses := 0
-	i := 0
-	columns := make([]string, len(r.URL.Query()))
-	for k := range r.URL.Query() {
-		columns[i] = k
-		i++
-	}
-	columns = t.validReadColumns(columns)
 
 	for _, cond := range buildConds(t, r) {
 		if cond.Condition == `not.in` {
