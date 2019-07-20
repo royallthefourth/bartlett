@@ -38,7 +38,7 @@ func TestParensMatch(t *testing.T) {
 		{`(asdf)`, true},
 		{`((asdf))`, true},
 		{`(asdf))`, false},
-		{`(asd)f`, true},
+		{`(asd)f`, false},
 		{`(asd)f)`, false},
 	}
 

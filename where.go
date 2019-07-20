@@ -53,6 +53,10 @@ func parseOr(cond whereCond) sqrl.Or {
 }
 
 func parensMatch(parens string) bool {
+	if parens[0] != '(' || parens[len(parens) - 1] != ')' {
+		return false
+	}
+
 	foundParens := false
 	weight := 0
 	for _, c := range parens {
