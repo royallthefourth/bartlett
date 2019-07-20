@@ -45,6 +45,9 @@ func buildConds(t Table, r *http.Request) []whereCond {
 
 func parseOr(cond whereCond) sqrl.Or {
 	// TODO split cond.Value on commas that are not between parens
+	// TODO handle trivial failure of missing parens or unbalanced parens
+	// TODO handle trivial success of one pair of parens with no nesting
+	return sqrl.Or{}
 }
 
 func parseSimpleWhereCond(rawCond string) (cond, val string) {
@@ -76,43 +79,31 @@ func rectifyArg(cond, val string) string {
 	return val
 }
 
+var urlWhere map [string]string
 func urlToWhereCond(column, condition string) string {
-	switch condition {
-	case `eq`:
-		return fmt.Sprintf(`%s = ?`, column)
-	case `not.eq`:
-		return fmt.Sprintf(`%s != ?`, column)
-	case `neq`:
-		return fmt.Sprintf(`%s != ?`, column)
-	case `not.neq`:
-		return fmt.Sprintf(`%s = ?`, column)
-	case `gt`:
-		return fmt.Sprintf(`%s > ?`, column)
-	case `not.gt`:
-		return fmt.Sprintf(`%s <= ?`, column)
-	case `gte`:
-		return fmt.Sprintf(`%s >= ?`, column)
-	case `not.gte`:
-		return fmt.Sprintf(`%s < ?`, column)
-	case `lt`:
-		return fmt.Sprintf(`%s < ?`, column)
-	case `not.lt`:
-		return fmt.Sprintf(`%s >= ?`, column)
-	case `lte`:
-		return fmt.Sprintf(`%s <= ?`, column)
-	case `not.lte`:
-		return fmt.Sprintf(`%s > ?`, column)
-	case `like`:
-		return fmt.Sprintf(`%s LIKE ?`, column)
-	case `not.like`:
-		return fmt.Sprintf(`%s NOT LIKE ?`, column)
-	case `is`:
-		return fmt.Sprintf(`%s IS ?`, column)
-	case `not.is`:
-		return fmt.Sprintf(`%s IS NOT ?`, column)
-	default:
-		return ``
+	if len(urlWhere) == 0 {
+		urlWhere = make(map [string]string, 16)
+		urlWhere[`eq`] = `%s = ?`
+		urlWhere[`not.eq`] = `%s != ?`
+		urlWhere[`neq`] = `%s != ?`
+		urlWhere[`not.neq`] = `%s = ?`
+		urlWhere[`gt`] = `%s > ?`
+		urlWhere[`not.gt`] = `%s <= ?`
+		urlWhere[`gte`] = `%s >= ?`
+		urlWhere[`not.gte`] = `%s < ?`
+		urlWhere[`lt`] = `%s < ?`
+		urlWhere[`not.lt`] = `%s >= ?`
+		urlWhere[`lte`] = `%s <= ?`
+		urlWhere[`not.lte`] = `%s > ?`
+		urlWhere[`like`] = `%s LIKE ?`
+		urlWhere[`not.like`] = `%s NOT LIKE ?`
+		urlWhere[`is`] = `%s IS ?`
+		urlWhere[`not.is`] = `%s IS NOT ?`
 	}
+	if format, ok := urlWhere[condition]; ok {
+		return fmt.Sprintf(format, column)
+	}
+	return ``
 }
 
 func whereIn(rawVal string) []string {
