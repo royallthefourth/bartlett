@@ -44,10 +44,30 @@ func buildConds(t Table, r *http.Request) []whereCond {
 }
 
 func parseOr(cond whereCond) sqrl.Or {
-	// TODO split cond.Value on commas that are not between parens
-	// TODO handle trivial failure of missing parens or unbalanced parens
+	if !parensMatch(cond.Value) {
+		return sqrl.Or{}
+	}
 	// TODO handle trivial success of one pair of parens with no nesting
+	// TODO split cond.Value on commas that are not between parens?
 	return sqrl.Or{}
+}
+
+func parensMatch(parens string) bool {
+	foundParens := false
+	weight := 0
+	for _, c := range parens {
+		if c == '(' {
+			foundParens = true
+			weight++
+		} else if c == ')' {
+				weight--
+		}
+		if weight < 0 {	// too many close parens
+			return false
+		}
+	}
+
+	return weight == 0 && foundParens
 }
 
 func parseSimpleWhereCond(rawCond string) (cond, val string) {
