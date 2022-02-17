@@ -16,10 +16,10 @@ var dsn string
 
 func init() {
 	flag.StringVar(&dsn, `dsn`, ``, `MariaDB connection string`)
-	flag.Parse()
 }
 
 func TestMariaDB(t *testing.T) {
+	flag.Parse()
 	db, err := sql.Open(`mysql`, dsn)
 	if err != nil {
 		t.Error(err)
