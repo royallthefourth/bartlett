@@ -132,7 +132,7 @@ func testSimpleGetAll(t *testing.T, b bartlett.Bartlett) {
 			}
 
 			if teachers[0].Name != `Mr. Smith` {
-				t.Errorf(`Expected first student to have age 18 but got %s instead`, teachers[0].Name)
+				t.Errorf(`Expected first teacher to have name "Mr. Smith" but got %s instead`, teachers[0].Name)
 			}
 		}
 	}

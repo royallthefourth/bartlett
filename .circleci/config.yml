@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12
+      - image: circleci/golang:1.17
       - image: circleci/mariadb:10.4.6-bionic
         environment:
           MYSQL_ROOT_PASSWORD: rootpw
