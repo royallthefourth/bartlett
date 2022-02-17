@@ -3,6 +3,7 @@ package sqlite3
 
 import (
 	"database/sql"
+	coredriver "database/sql/driver"
 	"encoding/json"
 	"fmt"
 	sqrl "github.com/Masterminds/squirrel"
@@ -99,7 +100,10 @@ func (driver SQLite3) MarshalResults(rows *sql.Rows, w http.ResponseWriter) erro
 			return fmt.Errorf(`failed to scan values: %v`, err)
 		}
 		for i, v := range values {
-			data[columns[i]] = v
+			data[columns[i]], err = v.(coredriver.Valuer).Value()
+			if err != nil {
+				return fmt.Errorf(`failed to get value: %s`, err)
+			}
 		}
 
 		jsonRow, err := json.Marshal(data)
